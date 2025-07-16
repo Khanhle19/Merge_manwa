@@ -1,0 +1,16 @@
+names:
+- '------------------------------'
+- This dataset was exported via roboflow.com on July 5- 2024 at 9-13 AM GMT
+- back_text
+- bubble
+- bubble_cutter - v5 2024-07-05 9-08am
+nc: 5
+roboflow:
+  license: CC BY 4.0
+  project: cut_the_bubble-2
+  url: https://universe.roboflow.com/deepl-n1zpl/cut_the_bubble-2/dataset/1
+  version: 1
+  workspace: deepl-n1zpl
+test: ../test/images
+train: ../train/images
+val: ../valid/images

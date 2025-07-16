@@ -1,0 +1,12 @@
+names:
+- quangcao
+nc: 1
+roboflow:
+  license: CC BY 4.0
+  project: detect_ads
+  url: https://universe.roboflow.com/deepl-n1zpl/detect_ads/dataset/2
+  version: 2
+  workspace: deepl-n1zpl
+test: ../test/images
+train: ../train/images
+val: ../valid/images
