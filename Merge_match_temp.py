@@ -16,6 +16,43 @@ from shapely import union, intersects, convex_hull
 # Disable PIL image size limit
 Image.MAX_IMAGE_PIXELS = None
 
+def closure_mask(mask, kernel_size=100, dilation_size=50):
+    kernel = np.ones((kernel_size, kernel_size), np.uint8)
+    closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    if dilation_size > 0:
+        dilate_kernel = np.ones((dilation_size, dilation_size), np.uint8)
+        closed = cv2.dilate(closed, dilate_kernel)
+    return closed
+
+def pipeline_mask_logic(mask_vn_path, mask_raw_path, output_path, kernel_size=100, dilation_size=50):
+    mask_vn = np.array(Image.open(mask_vn_path).convert('L'))
+    mask_raw = np.array(Image.open(mask_raw_path).convert('L'))
+
+    mask_vn_bin = (mask_vn > 0).astype(np.uint8)
+    mask_raw_bin = (mask_raw > 0).astype(np.uint8)
+
+    if mask_vn_bin.shape != mask_raw_bin.shape:
+        mask_raw_bin = cv2.resize(mask_raw_bin, (mask_vn_bin.shape[1], mask_vn_bin.shape[0]), interpolation=cv2.INTER_NEAREST)
+
+    closure_raw = closure_mask(mask_raw_bin, kernel_size, dilation_size + 100)
+    closure_vn = closure_mask(mask_vn_bin, kernel_size, dilation_size)
+
+    intersection_mask = np.logical_and(closure_raw, closure_vn).astype(np.uint8)
+
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(intersection_mask, connectivity=8)
+
+    final_mask = np.zeros_like(intersection_mask)
+    for label in range(1, num_labels): 
+        region = (labels == label)
+        if (closure_raw[region].sum() > 0) and (closure_vn[region].sum() > 0):
+            final_mask[region] = 1
+
+    retain_mask = (closure_raw > 0)
+    remove_mask = (closure_vn > 0) & (closure_raw == 0)
+    result = (final_mask & retain_mask) & (~remove_mask)
+
+    Image.fromarray((result * 255).astype(np.uint8)).save(output_path)
+
 class MangaProcessor:
     def __init__(self, base_path, threads=8):
         """Initialize the manga processor with base path and thread count"""
@@ -590,148 +627,46 @@ class MangaProcessor:
 
 
     # Define worker function
-    @staticmethod
-    def create_mask(path, maskvn_path=None, maksraw_path=None, mask_path=None):
-        try:
-            name = os.path.basename(path)
-            north = 0
-            
-            # Định nghĩa các hàm GIS nếu chưa được định nghĩa ở nơi khác
-            def mask_to_gdf(mask_path, north=0):
-                try:
-                    image = Image.open(mask_path)
-                    mask = np.array(image)
-                    transform = rasterio.transform.from_origin(west=0, north=north, xsize=1, ysize=1)
-                    
-                    polygon_shapes = []
-                    for geom, value in shapes(mask, mask=mask, transform=transform):
-                        if value == 255:  # White areas in the mask
-                            polygon_shapes.append(shape(geom))
-                    
-                    gdf = gpd.GeoDataFrame(geometry=polygon_shapes)
-                    gdf.crs = 3875
-                    return gdf
-                except Exception as e:
-                    print(f"⚠️ Error creating GeoDataFrame: {e}")
-                    return None
-            
-            def groupby_multipoly(df, by, aggfunc="first"):
-                try:
-                    data = df.drop(labels=df.geometry.name, axis=1)
-                    aggregated_data = data.groupby(by=by).agg(aggfunc)
-                    
-                    def merge_geometries(block):
-                        return MultiPolygon(block.values)
-                    
-                    g = df.groupby(by=by, group_keys=False)[df.geometry.name].agg(merge_geometries)
-                    aggregated_geometry = gpd.GeoDataFrame(g, geometry=df.geometry.name, crs=df.crs)
-                    aggregated = aggregated_geometry.join(aggregated_data)
-                    return aggregated
-                except Exception as e:
-                    print(f"⚠️ Error grouping polygons: {e}")
-                    return None
-                    
-            def intersects(geoms, other):
-                return geoms.intersects(other)
-                
-            def convex_hull(geoms):
-                return geoms.convex_hull
-            
-            if maskvn_path is None or maksraw_path is None or mask_path is None:
-                base_path = os.path.dirname(os.path.dirname(path))
-                maskvn_path = os.path.join(base_path, 'vn', 'mask')
-                maksraw_path = os.path.join(base_path, 'raw', 'mask')
-                mask_path = os.path.join(base_path, 'mask')
-            
-            # Get GeoDataFrames from masks
-            gdf_vn = mask_to_gdf(path, north)
-            raw_mask_path = os.path.join(maksraw_path, name)
-            
-            if not os.path.exists(raw_mask_path):
-                print(f"⚠️ Raw mask not found: {raw_mask_path}")
-                return
-                
-            gdf_raw = mask_to_gdf(raw_mask_path)
-            
-            if gdf_vn is None or gdf_raw is None:
-                print(f"⚠️ Failed to create GeoDataFrames for {name}")
-                return
-            
-            # Group raw mask polygons
-            gdf_raw['a'] = 1
-            grouped = groupby_multipoly(gdf_raw, by='a')
-            
-            if grouped is None or len(grouped.geometry) == 0:
-                print(f"⚠️ Failed to group polygons for {name}")
-                return
-                
-            geo = grouped.geometry.iloc[0]
-            
-            # Find intersections
-            gdf_vn['intersect'] = intersects(gdf_vn.geometry, geo)
-            gdf_vn = gdf_vn[gdf_vn['intersect'] == True]
-            
-            if len(gdf_vn) == 0:
-                print(f"⚠️ No intersections found for {name}")
-                return
-            
-            # Create convex hull
-            gdf_vn['geo'] = convex_hull(gdf_vn.geometry)
-            listshapes = ((geom, 255) for geom in gdf_vn['geo'])
-            
-            # Rasterize back to image
-            transform = rasterio.transform.from_origin(west=0, north=north, xsize=1, ysize=1)
-            image = Image.open(path)
-            raster = rasterize(shapes=listshapes, out_shape=(image.size[1], image.size[0]), transform=transform, fill=0)
-            pil_image = Image.fromarray(np.uint8(raster))
-            output_path = os.path.join(mask_path, name)
-            pil_image.save(output_path)
-            print(f"✅ Created intersection mask: {name}")
-        except Exception as e:
-            print(f"❌ Error creating mask for {path}: {e}")
-            pass
-        return path 
-
-    def create_intersection_masks(self, dir_to_process=None):
-        """Step 5: Create intersection masks using GIS"""
-        print("\n=== Creating Intersection Masks ===")
+    def create_intersection_masks(self, dir_to_process=None, kernel_size=100, dilation_size=50, threads=12):
+        """Step 5: Pipeline-based closure/union/exclusion mask logic with dilation"""
+        print("\n=== Creating Intersection Masks (Pipeline Logic + Dilation) ===")
         
         maskvn_path = os.path.join(self.base_path, 'vn', 'mask')
         maksraw_path = os.path.join(self.base_path, 'raw', 'mask')
         mask_path = os.path.join(self.base_path, 'mask')
-        
-        for path in [maskvn_path, maksraw_path, mask_path]:
-            os.makedirs(path, exist_ok=True)
+        os.makedirs(mask_path, exist_ok=True)
         
         # Get mask files to process
-        lists = glob.glob(f"{maskvn_path}/*.png")
-        
-        # Filter by dir_to_process if specified
+        lists = [f for f in os.listdir(maskvn_path) if f.endswith('.png')]
         if dir_to_process:
-            print(f"Processing only directory: {dir_to_process}")
-            dir_to_process_file = f"{dir_to_process}.png"
-            lists = [path for path in lists if os.path.basename(path) == dir_to_process_file]
-            
+            lists = [f"{dir_to_process}.png"] if f"{dir_to_process}.png" in lists else []
+        
         if not lists:
-            print("⚠️ No mask files found in VN mask directory. Skipping mask intersection.")
+            print("⚠️ No mask files found")
             return
-            
+        
         self.start_progress(len(lists))
         
-        # Tạo danh sách tham số cho mỗi tác vụ
-        args = [(path, maskvn_path, maksraw_path, mask_path) for path in lists]
+        def worker(f):
+            mask_vn_file = os.path.join(maskvn_path, f)
+            mask_raw_file = os.path.join(maksraw_path, f)
+            output_file = os.path.join(mask_path, f)
+            if not os.path.exists(mask_raw_file):
+                print(f"⚠️ Raw mask not found for {f}")
+                self.update_progress()
+                return
+            try:
+                pipeline_mask_logic(mask_vn_file, mask_raw_file, output_file, kernel_size, dilation_size)
+                print(f"✅ Created intersection mask: {f}")
+            except Exception as e:
+                print(f"❌ Error processing {f}: {e}")
+            self.update_progress()
         
-        # Xử lý song song
-        pool = ProcessPool(self.thread_count)
-        try:
-            results = pool.starmap(MangaProcessor.create_mask, args)
-            # for _ in results:
-            #     self.update_progress()
-        finally:
-            pool.close()
-            pool.join()
-
-        print("Mask intersection completed!")
+        from multiprocessing.dummy import Pool as ThreadPool
+        with ThreadPool(threads) as pool:
+            pool.map(worker, lists)
+        
+        print("Mask intersection (pipeline logic + dilation) completed!")
         
     def generate_final_results(self, dir_to_process=None):
         """Step 6: Generate final results by compositing images"""
@@ -862,10 +797,10 @@ class MangaProcessor:
         start_time = time.time()
         
         # Execute all steps
-        self.merge_raw_images(dir_to_process)
-        self.merge_raw_masks(dir_to_process)
-        self.resize_vn_images(dir_to_process)
-        self.merge_vn_images_vertically(dir_to_process)
+        # self.merge_raw_images(dir_to_process)
+        # self.merge_raw_masks(dir_to_process)
+        # self.resize_vn_images(dir_to_process)
+        # self.merge_vn_images_vertically(dir_to_process)
         self.create_intersection_masks(dir_to_process)
         self.generate_final_results(dir_to_process)
         
@@ -875,11 +810,11 @@ class MangaProcessor:
 
 # Main execution
 if __name__ == "__main__":
-    base_path = r"e:\Manwa\infinite-mage-941"
+    base_path = r"h:\manhwa\SSS-Class_Revival_Hunter"
     
     processor = MangaProcessor(base_path, threads=12)
     
-    dir_to_process = "c105"
+    dir_to_process = "c129"
     
     # Chạy pipeline với thư mục đã chỉ định
     processor.run_pipeline(dir_to_process)
