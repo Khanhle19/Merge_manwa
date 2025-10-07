@@ -12,10 +12,9 @@ input_folder = r"f:\Manhwa_result\zfinish\hunter-academys-battle-god-961\result"
 output_dir = os.path.join(input_folder, "ad_detection_results")  # thư mục lưu kết quả
 patches_dir = os.path.join(output_dir, "patches")  # thư mục lưu các patch
 
-# Thay thế đường dẫn này bằng đường dẫn đến mô hình YOLOv8 của bạn
-model_path = "E:/yolo/runs/detect_ads_model/weights/best.pt"  # Đường dẫn đến file model tốt nhất của bạn
+# YOLOv8
+model_path = "yolo/runs/detect_ads_model/weights/best.pt" 
 
-# Định dạng ảnh được hỗ trợ
 SUPPORTED_FORMATS = ('.jpg', '.jpeg', '.png', '.bmp', '.webp')
 
 # Cấu hình cửa sổ trượt

@@ -1,0 +1,483 @@
+Bắt đầu xử lý lúc 2025-07-21 11:57:01
+Đã tải mô hình thành công
+Tìm thấy 79 ảnh để xử lý
+Phát hiện bong bóng trong ảnh c1.png với kích thước 800x135256
+Chia ảnh thành 175 cửa sổ (1x175) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 160 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 160 bong bóng văn bản trong c1.png
+Đã xử lý thành công ảnh c1.png
+Phát hiện bong bóng trong ảnh c10.png với kích thước 800x150836
+Chia ảnh thành 196 cửa sổ (1x196) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 262 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 262 bong bóng văn bản trong c10.png
+Đã xử lý thành công ảnh c10.png
+Phát hiện bong bóng trong ảnh c11.png với kích thước 800x126582
+Chia ảnh thành 164 cửa sổ (1x164) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 258 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 258 bong bóng văn bản trong c11.png
+Đã xử lý thành công ảnh c11.png
+Phát hiện bong bóng trong ảnh c12.png với kích thước 800x109119
+Chia ảnh thành 141 cửa sổ (1x141) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 206 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 206 bong bóng văn bản trong c12.png
+Đã xử lý thành công ảnh c12.png
+Phát hiện bong bóng trong ảnh c13.png với kích thước 800x139565
+Chia ảnh thành 181 cửa sổ (1x181) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 376 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 376 bong bóng văn bản trong c13.png
+Đã xử lý thành công ảnh c13.png
+Phát hiện bong bóng trong ảnh c14.png với kích thước 800x102084
+Chia ảnh thành 132 cửa sổ (1x132) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 266 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 266 bong bóng văn bản trong c14.png
+Đã xử lý thành công ảnh c14.png
+Phát hiện bong bóng trong ảnh c15.png với kích thước 800x139859
+Chia ảnh thành 181 cửa sổ (1x181) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 330 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 330 bong bóng văn bản trong c15.png
+Đã xử lý thành công ảnh c15.png
+Phát hiện bong bóng trong ảnh c16.png với kích thước 800x110718
+Chia ảnh thành 143 cửa sổ (1x143) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 294 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 294 bong bóng văn bản trong c16.png
+Đã xử lý thành công ảnh c16.png
+Phát hiện bong bóng trong ảnh c17.png với kích thước 800x123078
+Chia ảnh thành 159 cửa sổ (1x159) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 338 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 338 bong bóng văn bản trong c17.png
+Đã xử lý thành công ảnh c17.png
+Phát hiện bong bóng trong ảnh c18.png với kích thước 800x134178
+Chia ảnh thành 174 cửa sổ (1x174) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 334 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 334 bong bóng văn bản trong c18.png
+Đã xử lý thành công ảnh c18.png
+Phát hiện bong bóng trong ảnh c19.png với kích thước 800x135246
+Chia ảnh thành 175 cửa sổ (1x175) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 394 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 394 bong bóng văn bản trong c19.png
+Đã xử lý thành công ảnh c19.png
+Phát hiện bong bóng trong ảnh c2.png với kích thước 800x132636
+Chia ảnh thành 172 cửa sổ (1x172) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 388 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 388 bong bóng văn bản trong c2.png
+Đã xử lý thành công ảnh c2.png
+Phát hiện bong bóng trong ảnh c21.png với kích thước 800x165728
+Chia ảnh thành 215 cửa sổ (1x215) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 360 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 360 bong bóng văn bản trong c21.png
+Đã xử lý thành công ảnh c21.png
+Phát hiện bong bóng trong ảnh c22.png với kích thước 800x144914
+Chia ảnh thành 188 cửa sổ (1x188) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 422 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 422 bong bóng văn bản trong c22.png
+Đã xử lý thành công ảnh c22.png
+Phát hiện bong bóng trong ảnh c23.png với kích thước 800x139350
+Chia ảnh thành 181 cửa sổ (1x181) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 382 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 382 bong bóng văn bản trong c23.png
+Đã xử lý thành công ảnh c23.png
+Phát hiện bong bóng trong ảnh c24.png với kích thước 800x111831
+Chia ảnh thành 145 cửa sổ (1x145) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 322 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 322 bong bóng văn bản trong c24.png
+Đã xử lý thành công ảnh c24.png
+Phát hiện bong bóng trong ảnh c25.png với kích thước 800x142632
+Chia ảnh thành 185 cửa sổ (1x185) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 398 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 398 bong bóng văn bản trong c25.png
+Đã xử lý thành công ảnh c25.png
+Phát hiện bong bóng trong ảnh c27.png với kích thước 800x125503
+Chia ảnh thành 163 cửa sổ (1x163) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 452 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 452 bong bóng văn bản trong c27.png
+Đã xử lý thành công ảnh c27.png
+Phát hiện bong bóng trong ảnh c28.png với kích thước 800x60087
+Chia ảnh thành 77 cửa sổ (1x77) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 170 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 170 bong bóng văn bản trong c28.png
+Đã xử lý thành công ảnh c28.png
+Phát hiện bong bóng trong ảnh c29.png với kích thước 800x121765
+Chia ảnh thành 158 cửa sổ (1x158) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 196 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 196 bong bóng văn bản trong c29.png
+Đã xử lý thành công ảnh c29.png
+Phát hiện bong bóng trong ảnh c3.png với kích thước 800x130713
+Chia ảnh thành 169 cửa sổ (1x169) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 326 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 326 bong bóng văn bản trong c3.png
+Đã xử lý thành công ảnh c3.png
+Phát hiện bong bóng trong ảnh c30.png với kích thước 800x57875
+Chia ảnh thành 75 cửa sổ (1x75) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 160 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 160 bong bóng văn bản trong c30.png
+Đã xử lý thành công ảnh c30.png
+Phát hiện bong bóng trong ảnh c31.png với kích thước 800x122748
+Chia ảnh thành 159 cửa sổ (1x159) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 350 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 350 bong bóng văn bản trong c31.png
+Đã xử lý thành công ảnh c31.png
+Phát hiện bong bóng trong ảnh c32.png với kích thước 800x43030
+Chia ảnh thành 55 cửa sổ (1x55) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 128 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 128 bong bóng văn bản trong c32.png
+Đã xử lý thành công ảnh c32.png
+Phát hiện bong bóng trong ảnh c33.png với kích thước 800x131521
+Chia ảnh thành 170 cửa sổ (1x170) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 356 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 356 bong bóng văn bản trong c33.png
+Đã xử lý thành công ảnh c33.png
+Phát hiện bong bóng trong ảnh c34.png với kích thước 800x126960
+Chia ảnh thành 164 cửa sổ (1x164) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 294 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 294 bong bóng văn bản trong c34.png
+Đã xử lý thành công ảnh c34.png
+Phát hiện bong bóng trong ảnh c35.png với kích thước 800x135874
+Chia ảnh thành 176 cửa sổ (1x176) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 422 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 422 bong bóng văn bản trong c35.png
+Đã xử lý thành công ảnh c35.png
+Phát hiện bong bóng trong ảnh c36.png với kích thước 800x131637
+Chia ảnh thành 171 cửa sổ (1x171) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 400 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 400 bong bóng văn bản trong c36.png
+Đã xử lý thành công ảnh c36.png
+Phát hiện bong bóng trong ảnh c37.png với kích thước 800x132155
+Chia ảnh thành 171 cửa sổ (1x171) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 452 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 452 bong bóng văn bản trong c37.png
+Đã xử lý thành công ảnh c37.png
+Phát hiện bong bóng trong ảnh c38.png với kích thước 800x111964
+Chia ảnh thành 145 cửa sổ (1x145) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 372 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 372 bong bóng văn bản trong c38.png
+Đã xử lý thành công ảnh c38.png
+Phát hiện bong bóng trong ảnh c39.png với kích thước 800x138673
+Chia ảnh thành 180 cửa sổ (1x180) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 388 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 388 bong bóng văn bản trong c39.png
+Đã xử lý thành công ảnh c39.png
+Phát hiện bong bóng trong ảnh c4.png với kích thước 800x140581
+Chia ảnh thành 182 cửa sổ (1x182) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 386 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 386 bong bóng văn bản trong c4.png
+Đã xử lý thành công ảnh c4.png
+Phát hiện bong bóng trong ảnh c40.png với kích thước 800x138767
+Chia ảnh thành 180 cửa sổ (1x180) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 398 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 398 bong bóng văn bản trong c40.png
+Đã xử lý thành công ảnh c40.png
+Phát hiện bong bóng trong ảnh c41.png với kích thước 800x138974
+Chia ảnh thành 180 cửa sổ (1x180) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 520 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 520 bong bóng văn bản trong c41.png
+Đã xử lý thành công ảnh c41.png
+Phát hiện bong bóng trong ảnh c42.png với kích thước 800x132274
+Chia ảnh thành 171 cửa sổ (1x171) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 394 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 394 bong bóng văn bản trong c42.png
+Đã xử lý thành công ảnh c42.png
+Phát hiện bong bóng trong ảnh c43.png với kích thước 800x136160
+Chia ảnh thành 176 cửa sổ (1x176) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 468 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 468 bong bóng văn bản trong c43.png
+Đã xử lý thành công ảnh c43.png
+Phát hiện bong bóng trong ảnh c44.png với kích thước 800x130265
+Chia ảnh thành 169 cửa sổ (1x169) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 406 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 406 bong bóng văn bản trong c44.png
+Đã xử lý thành công ảnh c44.png
+Phát hiện bong bóng trong ảnh c45.png với kích thước 800x137345
+Chia ảnh thành 178 cửa sổ (1x178) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 456 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 456 bong bóng văn bản trong c45.png
+Đã xử lý thành công ảnh c45.png
+Phát hiện bong bóng trong ảnh c46.png với kích thước 800x135697
+Chia ảnh thành 176 cửa sổ (1x176) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 514 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 514 bong bóng văn bản trong c46.png
+Đã xử lý thành công ảnh c46.png
+Phát hiện bong bóng trong ảnh c47.png với kích thước 800x136514
+Chia ảnh thành 177 cửa sổ (1x177) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 472 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 472 bong bóng văn bản trong c47.png
+Đã xử lý thành công ảnh c47.png
+Phát hiện bong bóng trong ảnh c48.png với kích thước 800x143339
+Chia ảnh thành 186 cửa sổ (1x186) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 516 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 516 bong bóng văn bản trong c48.png
+Đã xử lý thành công ảnh c48.png
+Phát hiện bong bóng trong ảnh c49.png với kích thước 800x142086
+Chia ảnh thành 184 cửa sổ (1x184) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 490 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 490 bong bóng văn bản trong c49.png
+Đã xử lý thành công ảnh c49.png
+Phát hiện bong bóng trong ảnh c5.png với kích thước 800x123296
+Chia ảnh thành 160 cửa sổ (1x160) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 320 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 320 bong bóng văn bản trong c5.png
+Đã xử lý thành công ảnh c5.png
+Phát hiện bong bóng trong ảnh c50.png với kích thước 800x141806
+Chia ảnh thành 184 cửa sổ (1x184) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 414 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 414 bong bóng văn bản trong c50.png
+Đã xử lý thành công ảnh c50.png
+Phát hiện bong bóng trong ảnh c51.png với kích thước 800x134234
+Chia ảnh thành 174 cửa sổ (1x174) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 312 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 312 bong bóng văn bản trong c51.png
+Đã xử lý thành công ảnh c51.png
+Phát hiện bong bóng trong ảnh c52.png với kích thước 800x128944
+Chia ảnh thành 167 cửa sổ (1x167) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 312 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 312 bong bóng văn bản trong c52.png
+Đã xử lý thành công ảnh c52.png
+Phát hiện bong bóng trong ảnh c53.png với kích thước 800x140644
+Chia ảnh thành 182 cửa sổ (1x182) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 362 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 362 bong bóng văn bản trong c53.png
+Đã xử lý thành công ảnh c53.png
+Phát hiện bong bóng trong ảnh c54.png với kích thước 800x133471
+Chia ảnh thành 173 cửa sổ (1x173) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 240 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 240 bong bóng văn bản trong c54.png
+Đã xử lý thành công ảnh c54.png
+Phát hiện bong bóng trong ảnh c55.png với kích thước 800x133430
+Chia ảnh thành 173 cửa sổ (1x173) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 268 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 268 bong bóng văn bản trong c55.png
+Đã xử lý thành công ảnh c55.png
+Phát hiện bong bóng trong ảnh c56.png với kích thước 800x129228
+Chia ảnh thành 167 cửa sổ (1x167) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 390 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 390 bong bóng văn bản trong c56.png
+Đã xử lý thành công ảnh c56.png
+Phát hiện bong bóng trong ảnh c57.png với kích thước 800x110367
+Chia ảnh thành 143 cửa sổ (1x143) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 260 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 260 bong bóng văn bản trong c57.png
+Đã xử lý thành công ảnh c57.png
+Phát hiện bong bóng trong ảnh c58.png với kích thước 800x131741
+Chia ảnh thành 171 cửa sổ (1x171) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 308 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 308 bong bóng văn bản trong c58.png
+Đã xử lý thành công ảnh c58.png
+Phát hiện bong bóng trong ảnh c59.png với kích thước 800x134769
+Chia ảnh thành 175 cửa sổ (1x175) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 162 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 162 bong bóng văn bản trong c59.png
+Đã xử lý thành công ảnh c59.png
+Phát hiện bong bóng trong ảnh c6.png với kích thước 800x130576
+Chia ảnh thành 169 cửa sổ (1x169) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 334 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 334 bong bóng văn bản trong c6.png
+Đã xử lý thành công ảnh c6.png
+Phát hiện bong bóng trong ảnh c60.png với kích thước 800x130786
+Chia ảnh thành 169 cửa sổ (1x169) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 176 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 176 bong bóng văn bản trong c60.png
+Đã xử lý thành công ảnh c60.png
+Phát hiện bong bóng trong ảnh c61.png với kích thước 800x134168
+Chia ảnh thành 174 cửa sổ (1x174) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 280 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 280 bong bóng văn bản trong c61.png
+Đã xử lý thành công ảnh c61.png
+Phát hiện bong bóng trong ảnh c62.png với kích thước 800x133696
+Chia ảnh thành 173 cửa sổ (1x173) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 300 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 300 bong bóng văn bản trong c62.png
+Đã xử lý thành công ảnh c62.png
+Phát hiện bong bóng trong ảnh c63.png với kích thước 800x124435
+Chia ảnh thành 161 cửa sổ (1x161) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 176 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 176 bong bóng văn bản trong c63.png
+Đã xử lý thành công ảnh c63.png
+Phát hiện bong bóng trong ảnh c64.png với kích thước 800x141611
+Chia ảnh thành 184 cửa sổ (1x184) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 442 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 442 bong bóng văn bản trong c64.png
+Đã xử lý thành công ảnh c64.png
+Phát hiện bong bóng trong ảnh c65.png với kích thước 800x112459
+Chia ảnh thành 146 cửa sổ (1x146) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 150 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 150 bong bóng văn bản trong c65.png
+Đã xử lý thành công ảnh c65.png
+Phát hiện bong bóng trong ảnh c66.png với kích thước 800x140447
+Chia ảnh thành 182 cửa sổ (1x182) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 344 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 344 bong bóng văn bản trong c66.png
+Đã xử lý thành công ảnh c66.png
+Phát hiện bong bóng trong ảnh c67.png với kích thước 800x134945
+Chia ảnh thành 175 cửa sổ (1x175) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 446 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 446 bong bóng văn bản trong c67.png
+Đã xử lý thành công ảnh c67.png
+Phát hiện bong bóng trong ảnh c68.png với kích thước 800x135530
+Chia ảnh thành 176 cửa sổ (1x176) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 434 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 434 bong bóng văn bản trong c68.png
+Đã xử lý thành công ảnh c68.png
+Phát hiện bong bóng trong ảnh c69.png với kích thước 800x105465
+Chia ảnh thành 136 cửa sổ (1x136) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 360 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 360 bong bóng văn bản trong c69.png
+Đã xử lý thành công ảnh c69.png
+Phát hiện bong bóng trong ảnh c7.png với kích thước 800x133994
+Chia ảnh thành 174 cửa sổ (1x174) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 212 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 212 bong bóng văn bản trong c7.png
+Đã xử lý thành công ảnh c7.png
+Phát hiện bong bóng trong ảnh c70.png với kích thước 800x132343
+Chia ảnh thành 171 cửa sổ (1x171) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 402 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 402 bong bóng văn bản trong c70.png
+Đã xử lý thành công ảnh c70.png
+Phát hiện bong bóng trong ảnh c71.png với kích thước 800x133915
+Chia ảnh thành 174 cửa sổ (1x174) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 376 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 376 bong bóng văn bản trong c71.png
+Đã xử lý thành công ảnh c71.png
+Phát hiện bong bóng trong ảnh c72.png với kích thước 800x124401
+Chia ảnh thành 161 cửa sổ (1x161) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 172 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 172 bong bóng văn bản trong c72.png
+Đã xử lý thành công ảnh c72.png
+Phát hiện bong bóng trong ảnh c73.png với kích thước 800x130396
+Chia ảnh thành 169 cửa sổ (1x169) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 240 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 240 bong bóng văn bản trong c73.png
+Đã xử lý thành công ảnh c73.png
+Phát hiện bong bóng trong ảnh c74.png với kích thước 800x120123
+Chia ảnh thành 156 cửa sổ (1x156) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 226 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 226 bong bóng văn bản trong c74.png
+Đã xử lý thành công ảnh c74.png
+Phát hiện bong bóng trong ảnh c75.png với kích thước 800x126705
+Chia ảnh thành 164 cửa sổ (1x164) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 322 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 322 bong bóng văn bản trong c75.png
+Đã xử lý thành công ảnh c75.png
+Phát hiện bong bóng trong ảnh c76.png với kích thước 800x152108
+Chia ảnh thành 197 cửa sổ (1x197) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 504 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 504 bong bóng văn bản trong c76.png
+Đã xử lý thành công ảnh c76.png
+Phát hiện bong bóng trong ảnh c77.png với kích thước 800x149375
+Chia ảnh thành 194 cửa sổ (1x194) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 450 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 450 bong bóng văn bản trong c77.png
+Đã xử lý thành công ảnh c77.png
+Phát hiện bong bóng trong ảnh c78.png với kích thước 800x144120
+Chia ảnh thành 187 cửa sổ (1x187) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 408 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 408 bong bóng văn bản trong c78.png
+Đã xử lý thành công ảnh c78.png
+Phát hiện bong bóng trong ảnh c79.png với kích thước 800x90084
+Chia ảnh thành 116 cửa sổ (1x116) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 228 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 228 bong bóng văn bản trong c79.png
+Đã xử lý thành công ảnh c79.png
+Phát hiện bong bóng trong ảnh c8.png với kích thước 800x147350
+Chia ảnh thành 191 cửa sổ (1x191) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 304 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 304 bong bóng văn bản trong c8.png
+Đã xử lý thành công ảnh c8.png
+Phát hiện bong bóng trong ảnh c80.png với kích thước 800x129900
+Chia ảnh thành 168 cửa sổ (1x168) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 326 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 326 bong bóng văn bản trong c80.png
+Đã xử lý thành công ảnh c80.png
+Phát hiện bong bóng trong ảnh c81.png với kích thước 800x136771
+Chia ảnh thành 177 cửa sổ (1x177) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 434 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 434 bong bóng văn bản trong c81.png
+Đã xử lý thành công ảnh c81.png
+Phát hiện bong bóng trong ảnh c9.png với kích thước 800x154481
+Chia ảnh thành 200 cửa sổ (1x200) với kích thước 1024 và độ chồng lấp 256
+Phát hiện tổng cộng 286 bong bóng văn bản trước khi hợp nhất
+Lỗi khi áp dụng NMS: len() of a 0-d tensor
+Phát hiện 286 bong bóng văn bản trong c9.png
+Đã xử lý thành công ảnh c9.png
+
+✅ Hoàn tất xử lý tất cả ảnh trong 0 giờ 11 phút 46.41 giây
+Tổng số ảnh: 79
+Số ảnh được xử lý: 79
+Số ảnh có bong bóng được phát hiện: 79
+Kết quả được lưu tại: f:\Manhwa_result\zfinish\hunter-academys-battle-god-961\result_1

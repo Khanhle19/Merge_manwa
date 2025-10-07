@@ -12,15 +12,15 @@ from datetime import datetime
 from time import time
 
 # Đường dẫn đến các thư mục chứa ảnh
-result_dir = r"f:\Manhwa_result\zfinish\hunter-academys-battle-god-961\inpainted"  # Ảnh tiếng Anh (để phát hiện bong bóng)
-vn_dir = r"f:\Manhwa_result\zfinish\hunter-academys-battle-god-961"  # Ảnh tiếng Việt (nguồn lấy nội dung)
+result_dir = r"e:\Manwa\reincarnation-path-of-the-underworld-king\result"  # Ảnh tiếng Anh (để phát hiện bong bóng)
+vn_dir = r"e:\Manwa\reincarnation-path-of-the-underworld-king\vn"  # Ảnh tiếng Việt (nguồn lấy nội dung)
 
 # Thư mục đầu ra - chỉ lưu kết quả cuối cùng
-output_dir = r"f:\Manhwa_result\zfinish\hunter-academys-battle-god-961\result"
+output_dir = r"e:\Manwa\reincarnation-path-of-the-underworld-king\result_1"
 os.makedirs(output_dir, exist_ok=True)
 
 # Đường dẫn đến mô hình
-model_dir = "yolo"
+model_dir = "yolo\cut_bubble\model_v3\weights"
 model_path = os.path.join(model_dir, "best.pt")
 
 # Tạo thư mục log để ghi lại quá trình xử lý

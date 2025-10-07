@@ -6,52 +6,18 @@ import numpy as np
 import cv2
 from PIL import Image
 from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Pool as ProcessPool
-import rasterio
-from rasterio.features import shapes, rasterize
-import geopandas as gpd
-from shapely.geometry import Polygon, MultiPolygon, shape
-from shapely import union, intersects, convex_hull
 
 # Disable PIL image size limit
 Image.MAX_IMAGE_PIXELS = None
 
-def closure_mask(mask, kernel_size=50, dilation_size=10):
+def closure_mask(mask, kernel_size=100, dilation_size=50):
+    """Apply morphological closure and dilation to mask"""
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     if dilation_size > 0:
         dilate_kernel = np.ones((dilation_size, dilation_size), np.uint8)
         closed = cv2.dilate(closed, dilate_kernel)
     return closed
-
-def pipeline_mask_logic(mask_vn_path, mask_raw_path, output_path, kernel_size=50, dilation_size=10):
-    mask_vn = np.array(Image.open(mask_vn_path).convert('L'))
-    mask_raw = np.array(Image.open(mask_raw_path).convert('L'))
-
-    mask_vn_bin = (mask_vn > 0).astype(np.uint8)
-    mask_raw_bin = (mask_raw > 0).astype(np.uint8)
-
-    if mask_vn_bin.shape != mask_raw_bin.shape:
-        mask_raw_bin = cv2.resize(mask_raw_bin, (mask_vn_bin.shape[1], mask_vn_bin.shape[0]), interpolation=cv2.INTER_NEAREST)
-
-    closure_raw = closure_mask(mask_raw_bin, kernel_size, dilation_size + 100)
-    closure_vn = closure_mask(mask_vn_bin, kernel_size, dilation_size)
-
-    intersection_mask = np.logical_and(closure_raw, closure_vn).astype(np.uint8)
-
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(intersection_mask, connectivity=8)
-
-    final_mask = np.zeros_like(intersection_mask)
-    for label in range(1, num_labels): 
-        region = (labels == label)
-        if (closure_raw[region].sum() > 0) and (closure_vn[region].sum() > 0):
-            final_mask[region] = 1
-
-    retain_mask = (closure_raw > 0)
-    remove_mask = (closure_vn > 0) & (closure_raw == 0)
-    result = (final_mask & retain_mask) & (~remove_mask)
-
-    Image.fromarray((result * 255).astype(np.uint8)).save(output_path)
 
 class MangaProcessor:
     def __init__(self, base_path, threads=8):
@@ -96,30 +62,6 @@ class MangaProcessor:
             os.makedirs(path, exist_ok=True)
             
         print("✅ Directory structure created")
-        
-        # Debug: Check critical paths and file counts
-        print(f"🔍 Path verification:")
-        critical_paths = ['raw2_inpainted', 'raw2_mask', 'raw1']
-        for path_name in critical_paths:
-            path = self.paths[path_name]
-            exists = os.path.exists(path)
-            file_count = 0
-            sample_files = []
-            
-            if exists:
-                try:
-                    all_files = os.listdir(path)
-                    png_files = [f for f in all_files if f.endswith('.png')]
-                    file_count = len(png_files)
-                    sample_files = png_files[:3]
-                except:
-                    file_count = "Error reading"
-                    
-            print(f"   {path_name}: {path}")
-            print(f"     Exists: {exists}, PNG files: {file_count}")
-            if sample_files:
-                print(f"     Sample files: {sample_files}")
-        print()
 
     @staticmethod
     def natural_sort_key(s):
@@ -136,7 +78,7 @@ class MangaProcessor:
         """Update and display progress"""
         self.completed_tasks += 1
         progress = (self.completed_tasks / self.total_tasks) * 100
-        elapsed = time.time() - self.start_time
+        elapsed = time.time() - (self.start_time or 0)
         
         if self.completed_tasks > 0 and elapsed > 0:
             items_per_sec = self.completed_tasks / elapsed
@@ -170,18 +112,7 @@ class MangaProcessor:
                 image_files = sorted(glob.glob(gpath), key=MangaProcessor.natural_sort_key)
                 
                 if not image_files:
-                    print(f"⚠️ No images found for {dir} at path: {gpath}")
-                    # Debug: Show what files actually exist
-                    inpainted_dir = self.paths['raw2_inpainted']
-                    if os.path.exists(inpainted_dir):
-                        all_files = os.listdir(inpainted_dir)
-                        matching_files = [f for f in all_files if f.startswith(f"{dir}-") and f.endswith('.png')]
-                        print(f"   Directory exists with {len(all_files)} total files")
-                        print(f"   Found {len(matching_files)} files matching pattern '{dir}-*.png'")
-                        if matching_files:
-                            print(f"   Sample files: {matching_files[:5]}")
-                    else:
-                        print(f"   Directory {inpainted_dir} does not exist")
+                    print(f"⚠️ No images found for {dir}")
                     self.update_progress()
                     return
                 
@@ -194,13 +125,11 @@ class MangaProcessor:
                     try:
                         img = Image.open(path)
                         x = img.size[0]
-                        # Remove width restriction - accept all valid images
-                        # Original logic: if x > 1000: continue
-                        # New logic: accept all images
+                        if x > 1000:
+                            continue
                         ratio = self.target_width / x
                         y += int(img.size[1] * ratio)
                         valid_files.append(path)
-                        # print(f"✅ Valid image: {os.path.basename(path)} ({x}x{img.size[1]})")
                     except Exception as e:
                         print(f"⚠️ Cannot open image {path}: {e}")
                 
@@ -277,18 +206,7 @@ class MangaProcessor:
                 mask_files = sorted(glob.glob(gpath), key=MangaProcessor.natural_sort_key) 
                 
                 if not mask_files:
-                    print(f"⚠️ No mask files found for {dir} at path: {gpath}")
-                    # Debug: Show what files actually exist
-                    mask_dir = self.paths['raw2_mask']
-                    if os.path.exists(mask_dir):
-                        all_files = os.listdir(mask_dir)
-                        matching_files = [f for f in all_files if f.startswith(f"{dir}-") and f.endswith('.png')]
-                        print(f"   Directory exists with {len(all_files)} total files")
-                        print(f"   Found {len(matching_files)} files matching pattern '{dir}-*.png'")
-                        if matching_files:
-                            print(f"   Sample files: {matching_files[:5]}")
-                    else:
-                        print(f"   Directory {mask_dir} does not exist")
+                    print(f"⚠️ No mask files found for {dir}")
                     self.update_progress()
                     continue
                 
@@ -301,13 +219,11 @@ class MangaProcessor:
                     try:
                         img = Image.open(path)
                         x = img.size[0]
-                        # Remove width restriction - accept all valid masks
-                        # Original logic: if x > 1000: continue  
-                        # New logic: accept all masks
+                        if x > 1000:
+                            continue
                         ratio = self.target_width / x
                         y += int(img.size[1] * ratio)
                         valid_files.append(path)
-                        print(f"✅ Valid mask: {os.path.basename(path)} ({x}x{img.size[1]})")
                     except Exception as e:
                         print(f"⚠️ Cannot open mask {path}: {e}")
                 
@@ -405,7 +321,7 @@ class MangaProcessor:
                     if img.width != self.target_width:
                         ratio = self.target_width / img.width
                         new_height = int(img.height * ratio)
-                        img = img.resize((self.target_width, new_height), Image.LANCZOS)
+                        img = img.resize((self.target_width, new_height), Image.Resampling.LANCZOS)
                         img.save(output_path, quality=95)
                     else: 
                         shutil.copy(image_path, output_path)
@@ -429,7 +345,7 @@ class MangaProcessor:
                     if img.width != self.target_width:
                         ratio = self.target_width / img.width
                         new_height = int(img.height * ratio)
-                        img = img.resize((self.target_width, new_height), Image.LANCZOS)
+                        img = img.resize((self.target_width, new_height), Image.Resampling.LANCZOS)
                         img.save(output_path, quality=95)
                     else: 
                         shutil.copy(image_path, output_path)
@@ -476,7 +392,6 @@ class MangaProcessor:
                 y_end = min(raw_image.shape[0], y_end)
                 
                 if y_start >= y_end or y_start >= raw_image.shape[0] or y_end <= 0:
-                    print("⚠️ Invalid search region")
                     return None, None, 0.0
                 
                 region = raw_image[y_start:y_end, :].copy()
@@ -501,7 +416,6 @@ class MangaProcessor:
                     new_width = int(template.shape[1] * scale_factor)
                     new_height = int(template.shape[0] * scale_factor)
                     template = cv2.resize(template, (new_width, new_height))
-                    print(f"Template resized to {new_width}x{new_height}")
                 
                 # Convert to grayscale
                 if len(region.shape) == 3:
@@ -522,10 +436,7 @@ class MangaProcessor:
                 kp2, des2 = sift.detectAndCompute(region_gray, None)
                 
                 if des1 is None or des2 is None or len(kp1) < 10 or len(kp2) < 10:
-                    print(f"⚠️ Insufficient SIFT features detected: {len(kp1) if kp1 else 0} in template, {len(kp2) if kp2 else 0} in region")
                     return None, None, 0.0
-                
-                print(f"Found {len(kp1)} keypoints in template, {len(kp2)} keypoints in region")
                 
                 # Match descriptors using FLANN
                 FLANN_INDEX_KDTREE = 1
@@ -543,10 +454,7 @@ class MangaProcessor:
                         if m.distance < 0.7 * n.distance:
                             good_matches.append(m)
                 
-                print(f"Found {len(good_matches)} good matches out of {len(matches)} total matches")
-                
                 if len(good_matches) < 10:
-                    print("⚠️ Not enough good matches found")
                     return None, None, 0.0
                 
                 # Extract matched keypoints
@@ -557,7 +465,6 @@ class MangaProcessor:
                 homography, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
                 
                 if homography is None:
-                    print("⚠️ Could not compute homography")
                     return None, None, 0.0
                 
                 # Calculate confidence
@@ -582,7 +489,6 @@ class MangaProcessor:
                 return (top_left_x, top_left_y), transformed_corners, confidence
                     
             except Exception as e:
-                print(f"⚠️ SIFT matching error: {e}")
                 return None, None, 0.0
         
         def find_template_position_template_matching(raw_image, template, search_region, small_images=None, current_index=None):
@@ -598,7 +504,6 @@ class MangaProcessor:
                 images_used = 0 
                 
                 if template.shape[0] < 1000 and small_images is not None and current_index is not None:
-                    print(f"Template height ({template.shape[0]}) < 1000, attempting to merge with next images")
                     merged_height = template.shape[0]
                     merge_candidates = [template]
                     next_idx = current_index + 1
@@ -629,7 +534,6 @@ class MangaProcessor:
                             merged_template[y_offset:y_offset+h, 0:img.shape[1]] = img
                             y_offset += h
                         
-                        print(f"Merged {len(merge_candidates)} images into template of size {merged_template.shape[1]}x{merged_template.shape[0]}")
                         template = merged_template
                 
                 # Resize template if needed
@@ -653,14 +557,11 @@ class MangaProcessor:
                 if max_val >= 0.6: 
                     top_left_x = max_loc[0]
                     top_left_y = max_loc[1] + y_start  # Add offset
-                    print(f"Template matching found position at ({top_left_x}, {top_left_y}) with confidence {max_val:.3f}")
                     return (top_left_x, top_left_y), max_val, merged_template, images_used
                 else:
-                    print(f"Template matching confidence too low: {max_val:.3f}")
                     return None, max_val, merged_template, images_used
                         
             except Exception as e:
-                print(f"⚠️ Template matching error: {e}")
                 return None, 0.0, None, 0
         
         def merge_images_vertically(dir):
@@ -687,8 +588,6 @@ class MangaProcessor:
                     self.update_progress()
                     return
                 
-                print(f"Found {len(files)} images for chapter {name}")
-                
                 # Load images and masks
                 images = []
                 masks = []
@@ -701,7 +600,6 @@ class MangaProcessor:
                         base_name = os.path.splitext(filename)[0]
                         mask_path = os.path.join(self.paths['vn3_mask'], f"{base_name}.png")
                         if not os.path.exists(mask_path):
-                            print(f"⚠️ Mask not found for {filename}, creating blank mask")
                             try:
                                 img = cv2.imread(path)
                                 if img is not None:
@@ -738,7 +636,6 @@ class MangaProcessor:
                     return
                     
                 raw_height, raw_width, _ = raw_image.shape
-                print(f"Raw image dimensions: {raw_width}x{raw_height}")
 
                 # Create output canvases
                 merged = Image.new("RGB", (raw_width, raw_height), color=(255, 255, 255))
@@ -755,11 +652,9 @@ class MangaProcessor:
                     
                     # Define search region based on current_y
                     if i == 0:
-                        search_region = (0, min(10000, raw_height))
+                        search_region = (0, min(5000, raw_height))
                     else:
-                        search_region = (max(0, current_y - 15000), min(raw_height, current_y + 20000))
-                    
-                    print(f"Searching for {files[i]} in region y={search_region[0]} to y={search_region[1]}")
+                        search_region = (max(0, current_y - 10000), min(raw_height, current_y + 10000))
                     
                     # Find position using improved SIFT matching
                     position_result = find_template_position_sift(raw_image, template, search_region)
@@ -770,7 +665,6 @@ class MangaProcessor:
                     if position_result and position_result[2] >= 0.7:
                         position, transformed_corners, confidence = position_result
                         method = "SIFT"
-                        print(f"✅ SIFT match for {files[i]}: position {position}, confidence: {confidence:.3f}")
                         
                         # Extract corners for precise paste
                         top_left = (int(transformed_corners[0][0][0]), int(transformed_corners[0][0][1]))
@@ -788,7 +682,6 @@ class MangaProcessor:
                         
                     else:
                         _, _, confidence = position_result
-                        print(f"Confidence: {confidence:.3f}")
                         # Fallback to template matching
                         fallback_result = find_template_position_template_matching(
                             raw_image, 
@@ -806,9 +699,7 @@ class MangaProcessor:
 
                             if confidence >= 0.6:
                                 method = "Template matching"
-                                print(f"✅ Template matching for {files[i]}: position {position}, confidence: {confidence:.3f}")
                                 if merged_template is not None:
-                                    print(f"Using merged template for positioning")
                                     template = merged_template
                                     merged_mask_array = np.ones((merged_template.shape[0], merged_template.shape[1]), dtype=np.uint8) * 255
                                     mask_array = merged_mask_array
@@ -819,7 +710,6 @@ class MangaProcessor:
 
                             elif 0.2 <= confidence < 0.6:
                                 method = "Concat-below"
-                                print(f"⚠️ Confidence ({confidence:.3f}) low, concat below previous image.")
                                 x = 0
                                 y = current_y
                                 width, height = template.shape[1], template.shape[0]
@@ -828,11 +718,9 @@ class MangaProcessor:
                                 top_left = (x, y)
 
                             else:
-                                print(f"⚠️ Could not find position for {files[i]} with sufficient confidence")
                                 i += 1
                                 continue
                         else:
-                            print(f"⚠️ Could not find position for {files[i]} with sufficient confidence")
                             i += 1
                             continue
                     
@@ -852,7 +740,6 @@ class MangaProcessor:
                         paste_height = min(height, raw_height - paste_y)
                         
                         if paste_width <= 0 or paste_height <= 0:
-                            print(f"⚠️ Image would be completely outside canvas, skipping")
                             i += 1
                             continue
                         
@@ -867,8 +754,6 @@ class MangaProcessor:
                                                 crop_left + paste_width, 
                                                 crop_top + paste_height))
                         
-                        print(f"Adjusted paste to ({paste_x}, {paste_y}) with size {img_pil.width}x{img_pil.height}")
-                        
                         # Paste the cropped image
                         merged.paste(img_pil, (paste_x, paste_y))
                         merged_mask.paste(mask_pil, (paste_x, paste_y))
@@ -881,8 +766,6 @@ class MangaProcessor:
                     
                     # Update current_y for next search based on bottom of current image
                     current_y = y + height
-                    
-                    print(f"✅ Placed image {files[i]} at position ({x}, {y}) using {method}")
                     
                     # Skip images that were merged in template matching
                     if skip_count > 0:
@@ -919,163 +802,142 @@ class MangaProcessor:
         
         print("VN image vertical merging with SIFT completed!")
 
-    def create_intersection_masks(self, dir_to_process=None, kernel_size=50, dilation_size=10):
-        """Step 5: Pipeline-based closure/union/exclusion mask logic with dilation"""
-        print("\n=== Creating Intersection Masks (Pipeline Logic + Dilation) ===")
+    def create_final_results_with_raw_mask(self, dir_to_process=None, kernel_size=100, dilation_size=50):
+        """Step 5+6 Combined: Create final results using raw mask closure/dilation to copy VN regions to raw image"""
+        print("\n=== Creating Final Results with Raw Mask Processing ===")
         
-        maskvn_path = os.path.join(self.base_path, 'vn', 'mask')
-        maksraw_path = os.path.join(self.base_path, 'raw', 'mask')
-        mask_path = os.path.join(self.base_path, 'mask')
-        os.makedirs(mask_path, exist_ok=True)
-        
-        # Get mask files to process
-        lists = [f for f in os.listdir(maskvn_path) if f.endswith('.png')]
-        if dir_to_process:
-            lists = [f"{dir_to_process}.png"] if f"{dir_to_process}.png" in lists else []
-        
-        if not lists:
-            print("⚠️ No mask files found")
-            return
-        
-        self.start_progress(len(lists))
-        
-        def worker(f):
-            mask_vn_file = os.path.join(maskvn_path, f)
-            mask_raw_file = os.path.join(maksraw_path, f)
-            output_file = os.path.join(mask_path, f)
-            if not os.path.exists(mask_raw_file):
-                print(f"⚠️ Raw mask not found for {f}")
-                self.update_progress()
-                return
-            try:
-                pipeline_mask_logic(mask_vn_file, mask_raw_file, output_file, kernel_size, dilation_size)
-                print(f"✅ Created intersection mask: {f}")
-            except Exception as e:
-                print(f"❌ Error processing {f}: {e}")
-            self.update_progress()
-        
-        from multiprocessing.dummy import Pool as ThreadPool
-        with ThreadPool(self.thread_count) as pool:
-            pool.map(worker, lists)
-        
-        print("Mask intersection (pipeline logic + dilation) completed!")
-        
-    def generate_final_results(self, dir_to_process=None):
-        """Step 6: Generate final results by compositing images"""
-        print("\n=== Generating Final Results ===")
-        
-        # Update paths
-        mask_path = os.path.join(self.base_path, 'mask')
+        # Set up paths
         vn_path = os.path.join(self.base_path, 'vn')
         raw_path = os.path.join(self.base_path, 'raw')
+        raw_mask_path = os.path.join(self.base_path, 'raw', 'mask')
         result_path = os.path.join(self.base_path, 'result')
         
-        # Find mask files
-        lists = glob.glob(f"{mask_path}/*.png")
+        # Find files to process
+        vn_files = [f for f in os.listdir(vn_path) if f.endswith('.png')]
         
         # Filter by dir_to_process if specified
         if dir_to_process:
             print(f"Processing only directory: {dir_to_process}")
-            dir_to_process_file = f"{dir_to_process}.png"
-            lists = [path for path in lists if os.path.basename(path) == dir_to_process_file]
+            vn_files = [f for f in vn_files if f.startswith(f"{dir_to_process}.")]
             
-        if not lists:
-            print("⚠️ No mask files found in mask directory. Skipping final results generation.")
+        if not vn_files:
+            print("⚠️ No VN files found. Skipping final results generation.")
             return
             
-        self.start_progress(len(lists))
+        self.start_progress(len(vn_files))
         
-        # Define worker function
-        def gen_result(path):
+        def process_single_file(filename):
             try:
-                name = os.path.basename(path)
-                source_path = os.path.join(vn_path, name)
-                dest_path = os.path.join(raw_path, name)
-                output_path = os.path.join(result_path, name)
+                # Define file paths
+                vn_image_path = os.path.join(vn_path, filename)
+                raw_image_path = os.path.join(raw_path, filename)
+                raw_mask_path_file = os.path.join(raw_mask_path, filename)
+                result_path_file = os.path.join(result_path, filename)
                 
-                if not os.path.exists(source_path):
-                    print(f"⚠️ Source image not found: {source_path}")
+                # Check if all required files exist
+                if not os.path.exists(vn_image_path):
+                    print(f"⚠️ VN image not found: {vn_image_path}")
                     self.update_progress()
                     return
                     
-                if not os.path.exists(dest_path):
-                    print(f"⚠️ Destination image not found: {dest_path}")
+                if not os.path.exists(raw_image_path):
+                    print(f"⚠️ Raw image not found: {raw_image_path}")
                     self.update_progress()
                     return
-                
-                # Read images
-                source_image = cv2.imread(source_path)
-                mask = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-                destination_image = cv2.imread(dest_path)
-                
-                if source_image is None or mask is None or destination_image is None:
-                    print(f"⚠️ Failed to read images for {name}")
-                    self.update_progress()
-                    return
-                
-                # Ensure mask is binary
-                _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
-                
-                # Adjust destination image size if needed
-                h, w = mask.shape
-                h1, w1, _ = destination_image.shape
-                
-                if h1 < h or w1 < w:
-                    # Create a blank white image with the mask's dimensions
-                    blank_image = np.zeros((h, w, 3), np.uint8)
-                    blank_image[:,:] = (255, 255, 255)  # White background
                     
-                    # Copy the destination image onto the blank canvas
-                    h_to_copy = min(h1, h)
-                    w_to_copy = min(w1, w)
-                    blank_image[0:h_to_copy, 0:w_to_copy] = destination_image[0:h_to_copy, 0:w_to_copy]
-                    destination_image = blank_image
-                
-                # Ensure source image is at least as large as the mask
-                if source_image.shape[0] < h or source_image.shape[1] < w:
-                    print(f"⚠️ Source image too small for mask in {name}")
+                if not os.path.exists(raw_mask_path_file):
+                    print(f"⚠️ Raw mask not found: {raw_mask_path_file}")
                     self.update_progress()
                     return
                 
-                # Apply mask to source image
-                x_offset = 0  # x-coordinate
-                y_offset = 0  # y-coordinate
+                # Load images and mask
+                vn_image = cv2.imread(vn_image_path)
+                raw_image = cv2.imread(raw_image_path)
+                raw_mask = cv2.imread(raw_mask_path_file, cv2.IMREAD_GRAYSCALE)
                 
-                # Crop the source image using the mask
-                cropped_image = cv2.bitwise_and(source_image[:h, :w], source_image[:h, :w], mask=mask)
+                if vn_image is None or raw_image is None or raw_mask is None:
+                    print(f"⚠️ Failed to read images for {filename}")
+                    self.update_progress()
+                    return
                 
-                # Create normalized masks
-                cropped_mask = mask / 255.0  # Convert to float and normalize
-                background_mask = 1 - cropped_mask  # Invert mask
+                # Ensure images have same dimensions
+                if vn_image.shape[:2] != raw_image.shape[:2]:
+                    print(f"⚠️ Image dimensions don't match for {filename}")
+                    self.update_progress()
+                    return
                 
-                # Extract region of interest
-                region_of_interest = destination_image[y_offset:y_offset+h, x_offset:x_offset+w]
+                # Convert mask to binary
+                raw_mask_bin = (raw_mask > 0).astype(np.uint8)
                 
-                # Apply masks and combine images
-                masked_region = region_of_interest * background_mask[:, :, np.newaxis]
-                masked_cropped_image = cropped_image * cropped_mask[:, :, np.newaxis]
-                combined_image = masked_region + masked_cropped_image
+                # Apply closure and dilation to raw mask
+                processed_mask = closure_mask(raw_mask_bin, kernel_size, dilation_size)
                 
-                # Place combined image back into destination
-                destination_image[y_offset:y_offset+h, x_offset:x_offset+w] = combined_image
+                # Find connected components in processed mask
+                num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(processed_mask, connectivity=8)
+                
+                # Create result image (start with raw image)
+                result_image = raw_image.copy()
+                
+                # Process each connected component
+                regions_copied = 0
+                for label in range(1, num_labels):  # Skip background (label 0)
+                    # Get region coordinates
+                    x = stats[label, cv2.CC_STAT_LEFT]
+                    y = stats[label, cv2.CC_STAT_TOP]
+                    w = stats[label, cv2.CC_STAT_WIDTH]
+                    h = stats[label, cv2.CC_STAT_HEIGHT]
+                    
+                    # Ensure coordinates are within image bounds
+                    x = max(0, x)
+                    y = max(0, y)
+                    w = min(w, raw_image.shape[1] - x)
+                    h = min(h, raw_image.shape[0] - y)
+                    
+                    if w <= 0 or h <= 0:
+                        continue
+                    
+                    # Extract region from processed mask
+                    region_mask = processed_mask[y:y+h, x:x+w]
+                    
+                    # Extract corresponding region from VN image
+                    vn_region = vn_image[y:y+h, x:x+w]
+                    
+                    # Extract corresponding region from raw image
+                    raw_region = raw_image[y:y+h, x:x+w]
+                    
+                    # Create normalized mask for blending
+                    region_mask_norm = region_mask.astype(np.float32) / 255.0
+                    region_mask_norm = np.expand_dims(region_mask_norm, axis=2)  # Add channel dimension
+                    
+                    # Blend VN region with raw region using the mask
+                    blended_region = (vn_region * region_mask_norm + 
+                                    raw_region * (1 - region_mask_norm)).astype(np.uint8)
+                    
+                    # Paste blended region back to result image
+                    result_image[y:y+h, x:x+w] = blended_region
+                    
+                    regions_copied += 1
                 
                 # Save result
-                cv2.imwrite(output_path, destination_image)
-                print(f"✅ Created final result: {name}")
-                self.update_progress()
-            except Exception as e:
-                print(f"❌ Error generating result for {path}: {e}")
+                cv2.imwrite(result_path_file, result_image)
+                print(f"✅ Created final result: {filename} (copied {regions_copied} regions)")
                 self.update_progress()
                 
-        # Process in parallel
+            except Exception as e:
+                print(f"❌ Error processing {filename}: {e}")
+                import traceback
+                traceback.print_exc()
+                self.update_progress()
+        
+        # Process files in parallel
         pool = ThreadPool(self.thread_count)
         try:
-            pool.map(gen_result, lists)
+            pool.map(process_single_file, vn_files)
         finally:
             pool.close()
             pool.join()
         
-        print("Final results generation completed!")
+        print("Final results generation with raw mask processing completed!")
         
     def run_pipeline(self, dir_to_process=None):
         """Run the complete pipeline"""
@@ -1089,12 +951,11 @@ class MangaProcessor:
         start_time = time.time()
         
         # Execute all steps
-        # self.merge_raw_images(dir_to_process)
-        # self.merge_raw_masks(dir_to_process)
-        # self.resize_vn_images(dir_to_process)
-        # self.merge_vn_images_vertically(dir_to_process)
-        self.create_intersection_masks(dir_to_process)
-        self.generate_final_results(dir_to_process)
+        self.merge_raw_images(dir_to_process)
+        self.merge_raw_masks(dir_to_process)
+        self.resize_vn_images(dir_to_process)
+        self.merge_vn_images_vertically(dir_to_process)
+        self.create_final_results_with_raw_mask(dir_to_process)  # New combined step 5+6
         
         elapsed = time.time() - start_time
         print(f"\n✅ Pipeline completed in {elapsed:.1f} seconds!")
@@ -1102,12 +963,13 @@ class MangaProcessor:
 
 # Main execution
 if __name__ == "__main__":
-    base_path = r"h:\manhwa\Rent-A-Girlfriend_1\test"
+    base_path = r"e:\Manwa\reincarnation-path-of-the-underworld-king"
     
     processor = MangaProcessor(base_path, threads=12)
     
-    # dir_to_process = "c1"
+    dir_to_process = "c1"
     
-    # processor.run_pipeline(dir_to_process)
+    # Run pipeline with focus dir
+    processor.run_pipeline(dir_to_process)
     
-    processor.run_pipeline()
+    # processor.run_pipeline()

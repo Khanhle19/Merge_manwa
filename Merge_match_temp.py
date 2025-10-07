@@ -797,12 +797,12 @@ class MangaProcessor:
         start_time = time.time()
         
         # Execute all steps
-        # self.merge_raw_images(dir_to_process)
-        # self.merge_raw_masks(dir_to_process)
-        # self.resize_vn_images(dir_to_process)
+        self.merge_raw_images(dir_to_process)
+        self.merge_raw_masks(dir_to_process)
+        self.resize_vn_images(dir_to_process)
         # self.merge_vn_images_vertically(dir_to_process)
-        self.create_intersection_masks(dir_to_process)
-        self.generate_final_results(dir_to_process)
+        # self.create_intersection_masks(dir_to_process)
+        # self.generate_final_results(dir_to_process)
         
         elapsed = time.time() - start_time
         print(f"\n✅ Pipeline completed in {elapsed:.1f} seconds!")
@@ -810,11 +810,11 @@ class MangaProcessor:
 
 # Main execution
 if __name__ == "__main__":
-    base_path = r"h:\manhwa\SSS-Class_Revival_Hunter"
+    base_path = r"h:\manhwa\Rent-A-Girlfriend_1\test"
     
     processor = MangaProcessor(base_path, threads=12)
     
-    dir_to_process = "c129"
+    dir_to_process = "c1"
     
     # Chạy pipeline với thư mục đã chỉ định
     processor.run_pipeline(dir_to_process)
