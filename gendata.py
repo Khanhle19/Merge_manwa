@@ -56,65 +56,110 @@ def convert_images_in_all_subfolders(root_dir):
 
 # ===== LOGIC ĐỔI TÊN FOLDER CHAP =====
 def rename_chap_folders(base_dir):
-    """Đổi tên folder từ 'Chap X' thành 'cX' (hỗ trợ số thập phân và các format phức tạp)"""
-    print(f"🔧 UPDATED VERSION: Renaming chapter folders in: {base_dir}")
-    print("📋 Expected: 'Chap 354' -> 'c354', 'Chap 85 Text...' -> 'c85'")
+    """Đổi tên folder từ các format phức tạp thành 'cX' (hỗ trợ Volume, Chapter, số thập phân)"""
+    print(f"🔧 IMPROVED VERSION: Renaming chapter folders in: {base_dir}")
+    print("📋 Examples: 'cCh.293' -> 'c293', 'cVol.02Ch.001.5' -> 'c1.5', 'cVol.TBDCh.044.5' -> 'c44.5'")
     
     folders = [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
     renamed_count = 0
+    
+    def extract_chapter_number(folder_name):
+        """Extract chapter number from complex folder names"""
+        
+        # Pattern 1: cVol.XXCh.YYY.Z format
+        # Examples: cVol.02Ch.001.5 -> 1.5, cVol.3Ch.20 -> 20, cVol.21Ch.192.1 -> 192.1
+        vol_ch_match = re.search(r"c?Vol\.(?:\d+|TBD)Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vol_ch_match:
+            chap_num = vol_ch_match.group(1)
+            # Remove leading zeros but keep decimal part
+            if '.' in chap_num:
+                main_part, decimal_part = chap_num.split('.')
+                chap_num = str(int(main_part)) + '.' + decimal_part
+            else:
+                chap_num = str(int(chap_num))
+            return chap_num
+        
+        # Pattern 2: cCh.XXX format
+        # Examples: cCh.293 -> 293, cCh.001 -> 1
+        ch_match = re.search(r"c?Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if ch_match:
+            chap_num = ch_match.group(1)
+            # Remove leading zeros but keep decimal part
+            if '.' in chap_num:
+                main_part, decimal_part = chap_num.split('.')
+                chap_num = str(int(main_part)) + '.' + decimal_part
+            else:
+                chap_num = str(int(chap_num))
+            return chap_num
+        
+        # Pattern 3: Standard "Chap" + số
+        # Examples: "Chap 85", "Chapter 12", "cChap85"
+        chap_match = re.search(r"c?Chap(?:ter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if chap_match:
+            return chap_match.group(1)
+        
+        # Pattern 4: Volume + Chapter format (other variations)
+        # Examples: "Vol 2 Ch 15", "Volume 1 Chapter 5"
+        vol_chapter_match = re.search(r"Vol(?:ume)?\s*\d+\s*Ch(?:apter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vol_chapter_match:
+            return vol_chapter_match.group(1)
+        
+        # Pattern 5: Vietnamese format
+        # Examples: "Chương 5", "chương 10"
+        vn_match = re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vn_match:
+            return vn_match.group(1)
+        
+        # Pattern 6: Korean format
+        # Examples: "제 3화", "c제5화"
+        kr_match = re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", folder_name, re.IGNORECASE)
+        if kr_match:
+            return kr_match.group(1)
+        
+        # Pattern 7: Already in correct format
+        # Examples: "c123", "c45.5"
+        correct_match = re.match(r"^c(\d+(?:\.\d+)?)$", folder_name, re.IGNORECASE)
+        if correct_match:
+            return "ALREADY_CORRECT"
+        
+        return None
     
     with tqdm(folders, desc="Renaming chapters", unit="folder") as pbar:
         for folder_name in pbar:
             old_path = os.path.join(base_dir, folder_name)
             pbar.set_postfix_str(f"Processing {folder_name}")
             
-            new_name = None
+            # Extract chapter number
+            chap_num = extract_chapter_number(folder_name)
             
-            # Pattern 1: Tìm "Chap" + số (có thể có c ở đầu)
-            # Ví dụ: "Chap 85", "cChap85TheGirlfriend", "Chapter 12"
-            match1 = re.search(r"c?Chap(?:ter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
-            if match1:
-                chap_num = match1.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 2: Tìm các format tiếng Việt
-            # Ví dụ: "Chương 5", "chương 10", "Chuong15"
-            elif re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE):
-                match2 = re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
-                chap_num = match2.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 3: Tìm format Hàn Quốc
-            # Ví dụ: "제 3화", "c제5화"
-            elif re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", folder_name, re.IGNORECASE):
-                match3 = re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", folder_name, re.IGNORECASE)
-                chap_num = match3.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 4: Folder đã có format cXX rồi thì bỏ qua
-            elif re.match(r"^c\d+(?:\.\d+)?$", folder_name, re.IGNORECASE):
+            if chap_num == "ALREADY_CORRECT":
                 pbar.set_postfix_str(f"Already correct: {folder_name}")
                 continue
-            
-            # Nếu tìm thấy pattern và cần đổi tên
-            if new_name and new_name != folder_name:
-                new_path = os.path.join(base_dir, new_name)
+            elif chap_num:
+                new_name = f"c{chap_num}"
                 
-                try:
-                    # Kiểm tra xem folder đích đã tồn tại chưa
-                    if os.path.exists(new_path):
-                        pbar.set_postfix_str(f"Target exists: {new_name}")
-                        continue
+                # Only rename if different from current name
+                if new_name != folder_name:
+                    new_path = os.path.join(base_dir, new_name)
                     
-                    os.rename(old_path, new_path)
-                    renamed_count += 1
-                    pbar.set_postfix_str(f"Renamed to {new_name}")
-                except Exception as e:
-                    pbar.set_postfix_str(f"Error: {folder_name}")
+                    try:
+                        # Check if target already exists
+                        if os.path.exists(new_path):
+                            pbar.set_postfix_str(f"Target exists: {new_name}")
+                            continue
+                        
+                        os.rename(old_path, new_path)
+                        renamed_count += 1
+                        pbar.set_postfix_str(f"✅ {folder_name} -> {new_name}")
+                    except Exception as e:
+                        pbar.set_postfix_str(f"❌ Error: {folder_name}")
+                else:
+                    pbar.set_postfix_str(f"No change needed: {folder_name}")
             else:
-                pbar.set_postfix_str(f"No pattern matched: {folder_name}")
+                pbar.set_postfix_str(f"❓ No pattern matched: {folder_name}")
     
     print(f"Chapter renaming completed! Renamed: {renamed_count} folders")
+    return renamed_count
 
 # ===== LOGIC XỬ LÝ VN1 VÀ RAW1 =====
 def copy(basedir, rdir):
@@ -146,66 +191,100 @@ def copy(basedir, rdir):
                 print(f"Error copying {path}: {e}")
 
 def rename(basedir):
-    """Đổi tên folder với nhiều pattern khác nhau"""
+    """Đổi tên folder với nhiều pattern khác nhau - phiên bản cải tiến"""
     folders = [f for f in os.listdir(basedir) if os.path.isdir(os.path.join(basedir, f))]
     renamed_count = 0
+    
+    def extract_chapter_number_advanced(folder_name):
+        """Extract chapter number from complex folder names (same logic as rename_chap_folders)"""
+        
+        # Pattern 1: cVol.XXCh.YYY.Z format
+        vol_ch_match = re.search(r"c?Vol\.(?:\d+|TBD)Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vol_ch_match:
+            chap_num = vol_ch_match.group(1)
+            if '.' in chap_num:
+                main_part, decimal_part = chap_num.split('.')
+                chap_num = str(int(main_part)) + '.' + decimal_part
+            else:
+                chap_num = str(int(chap_num))
+            return chap_num
+        
+        # Pattern 2: cCh.XXX format
+        ch_match = re.search(r"c?Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if ch_match:
+            chap_num = ch_match.group(1)
+            if '.' in chap_num:
+                main_part, decimal_part = chap_num.split('.')
+                chap_num = str(int(main_part)) + '.' + decimal_part
+            else:
+                chap_num = str(int(chap_num))
+            return chap_num
+        
+        # Pattern 3: Standard "Chap" + số
+        chap_match = re.search(r"c?Chap(?:ter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if chap_match:
+            return chap_match.group(1)
+        
+        # Pattern 4: Volume + Chapter format
+        vol_chapter_match = re.search(r"Vol(?:ume)?\s*\d+\s*Ch(?:apter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vol_chapter_match:
+            return vol_chapter_match.group(1)
+        
+        # Pattern 5: Vietnamese format
+        vn_match = re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+        if vn_match:
+            return vn_match.group(1)
+        
+        # Pattern 6: Korean format
+        kr_match = re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", folder_name, re.IGNORECASE)
+        if kr_match:
+            return kr_match.group(1)
+        
+        # Pattern 7: Already correct format
+        correct_match = re.match(r"^c(\d+(?:\.\d+)?)$", folder_name, re.IGNORECASE)
+        if correct_match:
+            return "ALREADY_CORRECT"
+        
+        return None
     
     with tqdm(folders, desc="Renaming subfolders", unit="folder") as pbar:
         for fn in pbar:
             old_path = os.path.join(basedir, fn)
             pbar.set_postfix_str(f"Processing {fn}")
             
-            new_name = None
+            # Try advanced pattern matching first
+            chap_num = extract_chapter_number_advanced(fn)
             
-            # Pattern 1: Tìm "Chap" + số (giống như rename_chap_folders)
-            match1 = re.search(r"c?Chap(?:ter)?\s*(\d+(?:\.\d+)?)", fn, re.IGNORECASE)
-            if match1:
-                chap_num = match1.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 2: Tìm các format tiếng Việt
-            elif re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", fn, re.IGNORECASE):
-                match2 = re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", fn, re.IGNORECASE)
-                chap_num = match2.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 3: Tìm format Hàn Quốc
-            elif re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", fn, re.IGNORECASE):
-                match3 = re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", fn, re.IGNORECASE)
-                chap_num = match3.group(1)
-                new_name = f"c{chap_num}"
-            
-            # Pattern 4: Folder đã có format cXX rồi thì bỏ qua
-            elif re.match(r"^c\d+(?:\.\d+)?$", fn, re.IGNORECASE):
+            if chap_num == "ALREADY_CORRECT":
                 pbar.set_postfix_str(f"Already correct: {fn}")
                 continue
-            
-            # Fallback: Old pattern matching cho các format khác
+            elif chap_num:
+                new_name = f"c{chap_num}"
             else:
-                # Các thay thế cũ cho trường hợp không match pattern chính
+                # Fallback: Old pattern matching for other formats
                 new_name = fn.replace('Chapter ', 'c').replace('chapter-', 'c').replace('Chương ', 'c') \
                              .replace('Chuong', 'c').replace('chương ', 'c').replace('제 ', 'c') \
                              .replace('화', '').replace(' ', '')
                 
-                # Thêm 'c' ở đầu nếu chưa có
-                if not new_name.startswith('c'):
+                # Add 'c' prefix if not present
+                if not new_name.startswith('c') and new_name != fn:
                     new_name = f'c{new_name}'
             
-            # Nếu tìm thấy tên mới và khác với tên cũ
+            # Only rename if different from current name
             if new_name and new_name != fn:
                 new_path = os.path.join(basedir, new_name)
                 
                 try:
-                    # Kiểm tra xem folder đích đã tồn tại chưa
+                    # Check if target already exists
                     if os.path.exists(new_path):
                         pbar.set_postfix_str(f"Target exists: {new_name}")
                         continue
                     
                     os.rename(old_path, new_path)
                     renamed_count += 1
-                    pbar.set_postfix_str(f"Renamed to {new_name}")
+                    pbar.set_postfix_str(f"✅ {fn} -> {new_name}")
                 except Exception as e:
-                    pbar.set_postfix_str(f"Error: {fn}")
+                    pbar.set_postfix_str(f"❌ Error: {fn}")
             else:
                 pbar.set_postfix_str(f"No change needed: {fn}")
     
@@ -380,8 +459,111 @@ def copy_images_only(source_dir, target_dir):
     print(f"Results: Copied {copied_count}, Errors {error_count}")
 
 if __name__ == "__main__":
+    # Test cases for the new renaming function
+    def test_rename_patterns():
+        """Test the new renaming patterns with provided examples"""
+        test_cases = [
+            "cCh.293",           # Expected: c293
+            "cVol.02Ch.001.5",   # Expected: c1.5
+            "cVol.3Ch.20",       # Expected: c20
+            "cVol.21Ch.192.1",   # Expected: c192.1
+            "cVol.TBDCh.044.5",  # Expected: c44.5
+            "Chapter 25",        # Expected: c25
+            "Chương 10",         # Expected: c10
+            "제 5화",             # Expected: c5
+            "c123",              # Expected: Already correct
+            "c45.5",             # Expected: Already correct
+        ]
+        
+        print("🧪 Testing rename patterns:")
+        print("=" * 50)
+        
+        from gendata import rename_chap_folders
+        import tempfile
+        import os
+        
+        # Create temporary directory for testing
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create test folders
+            for test_case in test_cases:
+                test_folder = os.path.join(temp_dir, test_case)
+                os.makedirs(test_folder, exist_ok=True)
+            
+            print(f"📁 Before renaming:")
+            for folder in sorted(os.listdir(temp_dir)):
+                print(f"   {folder}")
+            
+            print("\n🔄 Running rename function...")
+            
+            # Extract chapter number function (copy from the main function)
+            def extract_chapter_number(folder_name):
+                import re
+                
+                # Pattern 1: cVol.XXCh.YYY.Z format
+                vol_ch_match = re.search(r"c?Vol\.(?:\d+|TBD)Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+                if vol_ch_match:
+                    chap_num = vol_ch_match.group(1)
+                    if '.' in chap_num:
+                        main_part, decimal_part = chap_num.split('.')
+                        chap_num = str(int(main_part)) + '.' + decimal_part
+                    else:
+                        chap_num = str(int(chap_num))
+                    return chap_num
+                
+                # Pattern 2: cCh.XXX format
+                ch_match = re.search(r"c?Ch\.(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+                if ch_match:
+                    chap_num = ch_match.group(1)
+                    if '.' in chap_num:
+                        main_part, decimal_part = chap_num.split('.')
+                        chap_num = str(int(main_part)) + '.' + decimal_part
+                    else:
+                        chap_num = str(int(chap_num))
+                    return chap_num
+                
+                # Other patterns...
+                chap_match = re.search(r"c?Chap(?:ter)?\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+                if chap_match:
+                    return chap_match.group(1)
+                
+                vn_match = re.search(r"c?Ch[ươuư][ơương]ng\s*(\d+(?:\.\d+)?)", folder_name, re.IGNORECASE)
+                if vn_match:
+                    return vn_match.group(1)
+                
+                kr_match = re.search(r"c?제\s*(\d+(?:\.\d+)?)\s*화?", folder_name, re.IGNORECASE)
+                if kr_match:
+                    return kr_match.group(1)
+                
+                correct_match = re.match(r"^c(\d+(?:\.\d+)?)$", folder_name, re.IGNORECASE)
+                if correct_match:
+                    return "ALREADY_CORRECT"
+                
+                return None
+            
+            # Test each case
+            print("\n📋 Test results:")
+            for original in test_cases:
+                chap_num = extract_chapter_number(original)
+                if chap_num == "ALREADY_CORRECT":
+                    result = "Already correct"
+                elif chap_num:
+                    result = f"c{chap_num}"
+                else:
+                    result = "No match"
+                
+                print(f"   {original:20} → {result}")
+        
+        print("\n" + "=" * 50)
+    
+    # Run test
+    print("🧪 Running rename pattern tests...")
+    test_rename_patterns()
+    
+    # Original main function
+    print("\n🚀 Starting actual processing...")
+    
     # Thay đường dẫn này thành folder chứa vn1 và raw1
-    base_dir = r"h:\manhwa\Rent-A-Girlfriend_1\test"
+    base_dir = r"f:\manhwa\Nhiem_vu_doi_that"
     
     print("🚀 Starting manga processing pipeline...")
     print(f"Base directory: {base_dir}")

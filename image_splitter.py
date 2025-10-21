@@ -8,12 +8,19 @@ from functools import partial
 
 Image.MAX_IMAGE_PIXELS = None  
 
-INPUT_DIRECTORY = r"h:\manhwa\The_Martial_God_Who_Regressed_Back_to_Level_2\result"
-OUTPUT_DIRECTORY = r"h:\manhwa\The_Martial_God_Who_Regressed_Back_to_Level_2\finish"
+INPUT_DIRECTORY = r"e:\Manwa\Grand_Blue\result"
+OUTPUT_DIRECTORY = r"e:\Manwa\Grand_Blue\final"
 
 NUM_PROCESSES = 20
 BATCH_SIZE = 2            
 SEGMENT_HEIGHT = 8000         
+
+# New feature: Split by file size limit
+ENABLE_SIZE_BASED_SPLITTING = True   # Enable splitting by file size instead of height
+TARGET_FILE_SIZE_KB = 300            # Target file size in KB
+MAX_FILE_SIZE_KB = 500               # Maximum allowed file size in KB
+MIN_SEGMENT_HEIGHT = 1000            # Minimum height for a segment
+SIZE_TOLERANCE = 0.1                 # 10% tolerance for file size (290-330KB acceptable)
 
 FILE_PREFIX = "c"              
 FILE_EXTENSION = ".png"        
@@ -49,6 +56,50 @@ def get_image_info(image_path):
     except Exception as e:
         return {'error': str(e)}
 
+def estimate_file_size_kb(width, height, format_type="JPEG", quality=95):
+    """Estimate file size in KB based on dimensions and format"""
+    if format_type == "JPEG":
+        # Rough estimation for JPEG: depends on quality and content complexity
+        # Base calculation: width * height * compression_factor
+        if quality >= 95:
+            compression_factor = 0.8
+        elif quality >= 85:
+            compression_factor = 0.4
+        elif quality >= 75:
+            compression_factor = 0.2
+        else:
+            compression_factor = 0.1
+        
+        estimated_bytes = width * height * compression_factor
+        return estimated_bytes / 1024
+    else:
+        # PNG estimation (much larger)
+        estimated_bytes = width * height * 3  # RGB
+        return estimated_bytes / 1024
+
+def find_optimal_segment_height(width, target_size_kb, format_type="JPEG", quality=95, min_height=1000):
+    """Find the optimal height for a segment to match target file size"""
+    # Binary search to find optimal height
+    low_height = min_height
+    high_height = 15000  # Max reasonable height for a segment
+    
+    target_tolerance = target_size_kb * SIZE_TOLERANCE
+    best_height = low_height
+    
+    for _ in range(20):  # Max 20 iterations
+        mid_height = (low_height + high_height) // 2
+        estimated_size = estimate_file_size_kb(width, mid_height, format_type, quality)
+        
+        if abs(estimated_size - target_size_kb) <= target_tolerance:
+            return mid_height
+        elif estimated_size < target_size_kb:
+            low_height = mid_height + 1
+            best_height = mid_height
+        else:
+            high_height = mid_height - 1
+    
+    return best_height
+
 def split_image_large(image_info, segment_height, show_detailed_log, output_config):
     image_path, output_dir, image_filename = image_info
     output_format, output_ext, quality, optimize, progressive = output_config
@@ -60,13 +111,26 @@ def split_image_large(image_info, segment_height, show_detailed_log, output_conf
         height = img_info['height']
         estimated_memory = img_info['estimated_memory_mb']
         total_pixels = img_info['total_pixels']
-        num_segments = math.ceil(height / segment_height)
+        
+        # Choose splitting method
+        if ENABLE_SIZE_BASED_SPLITTING:
+            optimal_height = find_optimal_segment_height(width, TARGET_FILE_SIZE_KB, output_format, quality, MIN_SEGMENT_HEIGHT)
+            num_segments = math.ceil(height / optimal_height)
+            actual_segment_height = optimal_height
+            split_method = f"size-based (target: {TARGET_FILE_SIZE_KB}KB, height: {optimal_height}px)"
+        else:
+            num_segments = math.ceil(height / segment_height)
+            actual_segment_height = segment_height
+            split_method = f"height-based ({segment_height}px)"
+            
         os.makedirs(output_dir, exist_ok=True)
+        segment_sizes = []  # Track actual file sizes
+        
         with Image.open(image_path) as img:
             if output_format == "JPEG" and img.mode in ("RGBA", "P"):
                 for i in range(num_segments):
-                    top = int(i * segment_height)
-                    bottom = int(min((i + 1) * segment_height, height))
+                    top = int(i * actual_segment_height)
+                    bottom = int(min((i + 1) * actual_segment_height, height))
                     width_int = int(width)
                     cropped = img.crop((0, top, width_int, bottom))
                     if cropped.mode in ("RGBA", "P"):
@@ -77,26 +141,62 @@ def split_image_large(image_info, segment_height, show_detailed_log, output_conf
                         cropped = background
                     elif cropped.mode != "RGB":
                         cropped = cropped.convert("RGB")
+                    
                     output_filename = f"{i + 1}{output_ext}"
                     output_path = os.path.join(output_dir, output_filename)
+                    
+                    # Save and check file size
                     cropped.save(output_path, format=output_format, quality=quality, optimize=optimize, progressive=progressive)
+                    
+                    # Check actual file size
+                    actual_size_kb = os.path.getsize(output_path) / 1024
+                    segment_sizes.append(actual_size_kb)
+                    
+                    # If file is too large, try to reduce quality or re-split
+                    if ENABLE_SIZE_BASED_SPLITTING and actual_size_kb > MAX_FILE_SIZE_KB:
+                        # Try reducing quality
+                        reduced_quality = max(60, quality - 20)
+                        cropped.save(output_path, format=output_format, quality=reduced_quality, optimize=True, progressive=progressive)
+                        actual_size_kb = os.path.getsize(output_path) / 1024
+                        segment_sizes[-1] = actual_size_kb
+                    
                     del cropped
             else:
                 if output_format == "JPEG" and img.mode != "RGB":
                     img = img.convert("RGB")
                 for i in range(num_segments):
-                    top = int(i * segment_height)
-                    bottom = int(min((i + 1) * segment_height, height))
+                    top = int(i * actual_segment_height)
+                    bottom = int(min((i + 1) * actual_segment_height, height))
                     width_int = int(width)
                     cropped = img.crop((0, top, width_int, bottom))
                     output_filename = f"{i + 1}{output_ext}"
                     output_path = os.path.join(output_dir, output_filename)
+                    
                     if output_format == "JPEG":
                         cropped.save(output_path, format=output_format, quality=quality, optimize=optimize, progressive=progressive)
                     else:
                         cropped.save(output_path, format=output_format, optimize=True)
+                    
+                    # Check actual file size
+                    actual_size_kb = os.path.getsize(output_path) / 1024
+                    segment_sizes.append(actual_size_kb)
+                    
+                    # If file is too large, try to reduce quality
+                    if ENABLE_SIZE_BASED_SPLITTING and output_format == "JPEG" and actual_size_kb > MAX_FILE_SIZE_KB:
+                        reduced_quality = max(60, quality - 20)
+                        cropped.save(output_path, format=output_format, quality=reduced_quality, optimize=True, progressive=progressive)
+                        actual_size_kb = os.path.getsize(output_path) / 1024
+                        segment_sizes[-1] = actual_size_kb
+                    
                     del cropped
-        return f"✓ Done {image_filename} - {num_segments} segments ({output_format}) [{total_pixels:,} pixels]"
+        
+        # Generate result message with size info
+        if ENABLE_SIZE_BASED_SPLITTING:
+            avg_size = sum(segment_sizes) / len(segment_sizes) if segment_sizes else 0
+            size_range = f"{min(segment_sizes):.1f}-{max(segment_sizes):.1f}KB" if segment_sizes else "N/A"
+            return f"✓ Done {image_filename} - {num_segments} segments ({split_method}) [avg: {avg_size:.1f}KB, range: {size_range}]"
+        else:
+            return f"✓ Done {image_filename} - {num_segments} segments ({output_format}) [{total_pixels:,} pixels]"
     except Exception as e:
         return f"✗ Error processing {image_filename}: {str(e)}"
 
@@ -136,7 +236,13 @@ def process_all_images_multiprocess():
         image_info_list.append((image_path, output_dir, image_file))
     output_config = (OUTPUT_FORMAT, OUTPUT_EXTENSION, JPEG_QUALITY, JPEG_OPTIMIZE, JPEG_PROGRESSIVE)
     actual_processes = min(NUM_PROCESSES if NUM_PROCESSES else cpu_count(), len(image_files))
-    print(f"\n🚀 Processing {len(image_files)} images with {actual_processes} processes...")
+    # Display processing mode
+    if ENABLE_SIZE_BASED_SPLITTING:
+        print(f"\n🎯 Size-based splitting enabled: Target {TARGET_FILE_SIZE_KB}KB, Max {MAX_FILE_SIZE_KB}KB")
+    else:
+        print(f"\n📏 Height-based splitting: {SEGMENT_HEIGHT}px per segment")
+    
+    print(f"🚀 Processing {len(image_files)} images with {actual_processes} processes...")
     batches = list(create_batches(image_info_list, BATCH_SIZE))
     start_time = time.time()
     try:

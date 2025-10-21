@@ -16,7 +16,7 @@ from shapely import union, intersects, convex_hull
 # Disable PIL image size limit
 Image.MAX_IMAGE_PIXELS = None
 
-def closure_mask(mask, kernel_size=50, dilation_size=10):
+def closure_mask(mask, kernel_size=30, dilation_size=20):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
     closed = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     if dilation_size > 0:
@@ -24,7 +24,7 @@ def closure_mask(mask, kernel_size=50, dilation_size=10):
         closed = cv2.dilate(closed, dilate_kernel)
     return closed
 
-def pipeline_mask_logic(mask_vn_path, mask_raw_path, output_path, kernel_size=50, dilation_size=10):
+def pipeline_mask_logic(mask_vn_path, mask_raw_path, output_path, kernel_size=30, dilation_size=20):
     mask_vn = np.array(Image.open(mask_vn_path).convert('L'))
     mask_raw = np.array(Image.open(mask_raw_path).convert('L'))
 
@@ -34,24 +34,45 @@ def pipeline_mask_logic(mask_vn_path, mask_raw_path, output_path, kernel_size=50
     if mask_vn_bin.shape != mask_raw_bin.shape:
         mask_raw_bin = cv2.resize(mask_raw_bin, (mask_vn_bin.shape[1], mask_vn_bin.shape[0]), interpolation=cv2.INTER_NEAREST)
 
-    closure_raw = closure_mask(mask_raw_bin, kernel_size, dilation_size + 100)
+    # Morphological processing để tạo các vùng liên thông lớn
+    closure_raw = closure_mask(mask_raw_bin, kernel_size, dilation_size + 50)
     closure_vn = closure_mask(mask_vn_bin, kernel_size, dilation_size)
 
-    intersection_mask = np.logical_and(closure_raw, closure_vn).astype(np.uint8)
-
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(intersection_mask, connectivity=8)
-
-    final_mask = np.zeros_like(intersection_mask)
-    for label in range(1, num_labels): 
-        region = (labels == label)
-        if (closure_raw[region].sum() > 0) and (closure_vn[region].sum() > 0):
-            final_mask[region] = 1
-
-    retain_mask = (closure_raw > 0)
-    remove_mask = (closure_vn > 0) & (closure_raw == 0)
-    result = (final_mask & retain_mask) & (~remove_mask)
-
-    Image.fromarray((result * 255).astype(np.uint8)).save(output_path)
+    # 🎯 LOGIC MỚI: Tạo union để có tất cả vùng tiềm năng
+    union_mask = np.logical_or(closure_raw, closure_vn).astype(np.uint8)
+    
+    # Tìm connected components từ union
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(union_mask, connectivity=8)
+    
+    # 🔑 LOGIC CHÍNH: Giữ toàn bộ component nếu có intersection
+    final_mask = np.zeros_like(union_mask)
+    valid_components = 0
+    
+    # print(f"Found {num_labels-1} connected components")
+    
+    for label in range(1, num_labels):  # Skip background (label 0)
+        # Lấy toàn bộ vùng của component này
+        component_region = (labels == label)
+        
+        # Kiểm tra xem trong component này có pixel nào thuộc cả 2 masks không
+        intersection_in_component = np.logical_and(
+            closure_raw[component_region], 
+            closure_vn[component_region]
+        )
+        
+        # 🔑 ĐIỀU KIỆN: Nếu có ít nhất 1 pixel intersection thì giữ TOÀN BỘ component
+        if intersection_in_component.sum() > 0:
+            # Giữ toàn bộ component (không chỉ phần intersection)
+            final_mask[component_region] = 1
+            valid_components += 1
+            print(f"✅ Kept entire component {label}: has {intersection_in_component.sum()} intersection pixels")
+        else:
+            print(f"❌ Rejected component {label}: no intersection pixels")
+    
+    print(f"Kept {valid_components} out of {num_labels-1} components")
+    
+    # Lưu kết quả
+    Image.fromarray((final_mask * 255).astype(np.uint8)).save(output_path)
 
 class MangaProcessor:
     def __init__(self, base_path, threads=8):
@@ -97,29 +118,29 @@ class MangaProcessor:
             
         print("✅ Directory structure created")
         
-        # Debug: Check critical paths and file counts
-        print(f"🔍 Path verification:")
-        critical_paths = ['raw2_inpainted', 'raw2_mask', 'raw1']
-        for path_name in critical_paths:
-            path = self.paths[path_name]
-            exists = os.path.exists(path)
-            file_count = 0
-            sample_files = []
+        # # Debug: Check critical paths and file counts
+        # print(f"🔍 Path verification:")
+        # critical_paths = ['raw2_inpainted', 'raw2_mask', 'raw1']
+        # for path_name in critical_paths:
+        #     path = self.paths[path_name]
+        #     exists = os.path.exists(path)
+        #     file_count = 0
+        #     sample_files = []
             
-            if exists:
-                try:
-                    all_files = os.listdir(path)
-                    png_files = [f for f in all_files if f.endswith('.png')]
-                    file_count = len(png_files)
-                    sample_files = png_files[:3]
-                except:
-                    file_count = "Error reading"
+        #     if exists:
+        #         try:
+        #             all_files = os.listdir(path)
+        #             png_files = [f for f in all_files if f.endswith('.png')]
+        #             file_count = len(png_files)
+        #             sample_files = png_files[:3]
+        #         except:
+        #             file_count = "Error reading"
                     
-            print(f"   {path_name}: {path}")
-            print(f"     Exists: {exists}, PNG files: {file_count}")
-            if sample_files:
-                print(f"     Sample files: {sample_files}")
-        print()
+        #     print(f"   {path_name}: {path}")
+        #     print(f"     Exists: {exists}, PNG files: {file_count}")
+        #     if sample_files:
+        #         print(f"     Sample files: {sample_files}")
+        # print()
 
     @staticmethod
     def natural_sort_key(s):
@@ -166,18 +187,18 @@ class MangaProcessor:
             try:
                 name = dir
                 padding = 0
-                gpath = os.path.join(self.paths['raw2_inpainted'], f"{dir}-*.png")
+                gpath = os.path.join(self.paths['raw2'], f"{dir}-*.jpg")
                 image_files = sorted(glob.glob(gpath), key=MangaProcessor.natural_sort_key)
                 
                 if not image_files:
                     print(f"⚠️ No images found for {dir} at path: {gpath}")
                     # Debug: Show what files actually exist
-                    inpainted_dir = self.paths['raw2_inpainted']
+                    inpainted_dir = self.paths['raw2']
                     if os.path.exists(inpainted_dir):
                         all_files = os.listdir(inpainted_dir)
-                        matching_files = [f for f in all_files if f.startswith(f"{dir}-") and f.endswith('.png')]
+                        matching_files = [f for f in all_files if f.startswith(f"{dir}-") and f.endswith('.jpg')]
                         print(f"   Directory exists with {len(all_files)} total files")
-                        print(f"   Found {len(matching_files)} files matching pattern '{dir}-*.png'")
+                        print(f"   Found {len(matching_files)} files matching pattern '{dir}-*.jpg'")
                         if matching_files:
                             print(f"   Sample files: {matching_files[:5]}")
                     else:
@@ -200,7 +221,7 @@ class MangaProcessor:
                         ratio = self.target_width / x
                         y += int(img.size[1] * ratio)
                         valid_files.append(path)
-                        # print(f"✅ Valid image: {os.path.basename(path)} ({x}x{img.size[1]})")
+                        print(f"✅ Valid image: {os.path.basename(path)} ({x}x{img.size[1]})")
                     except Exception as e:
                         print(f"⚠️ Cannot open image {path}: {e}")
                 
@@ -585,7 +606,7 @@ class MangaProcessor:
                 print(f"⚠️ SIFT matching error: {e}")
                 return None, None, 0.0
         
-        def find_template_position_template_matching(raw_image, template, search_region, small_images=None, current_index=None):
+        def find_template_position_template_matching(raw_image, template, search_region, small_images=None, small_masks=None, current_index=None):
             try:
                 # Extract the search region
                 y_start, y_end = search_region
@@ -593,46 +614,61 @@ class MangaProcessor:
                 y_end = min(raw_image.shape[0], y_end)
                 region = raw_image[y_start:y_end, :].copy()
                 
-                # Check if template is too small (height < 1000) and we have additional images
+                # Check if template is too small (height < 800) and we have additional images
                 merged_template = None
+                merged_mask = None
                 images_used = 0 
-                
-                if template.shape[0] < 1000 and small_images is not None and current_index is not None:
-                    print(f"Template height ({template.shape[0]}) < 1000, attempting to merge with next images")
+
+                if template.shape[0] < 800 and small_images is not None and current_index is not None:
+                    print(f"Template height ({template.shape[0]}) < 800, attempting to merge with next images")
                     merged_height = template.shape[0]
                     merge_candidates = [template]
+                    mask_candidates = [small_masks[current_index] if small_masks else None]
                     next_idx = current_index + 1
-                    
-                    # Find consecutive images to merge until height >= 1000 pixels
-                    while merged_height < 1000 and next_idx < len(small_images):
+
+                    # Find consecutive images to merge until height >= 800 pixels
+                    while merged_height < 800 and next_idx < len(small_images):
                         next_image = small_images[next_idx]
+                        next_mask = small_masks[next_idx] if small_masks and next_idx < len(small_masks) else None
                         merged_height += next_image.shape[0]
                         merge_candidates.append(next_image)
+                        mask_candidates.append(next_mask)
                         images_used += 1  
                         next_idx += 1
                         
                     if len(merge_candidates) > 1:
                         # Create merged template
                         merged_template = np.zeros((merged_height, template.shape[1], 3), dtype=np.uint8)
+                        merged_mask = np.zeros((merged_height, template.shape[1]), dtype=np.uint8)
                         y_offset = 0
                         
-                        for img in merge_candidates:
+                        for idx, img in enumerate(merge_candidates):
+                            corresponding_mask = mask_candidates[idx]
+                            
                             # Check if image is wider than merged template
                             if img.shape[1] > merged_template.shape[1]:
                                 scale_factor = merged_template.shape[1] / img.shape[1]
                                 new_width = merged_template.shape[1]
                                 new_height = int(img.shape[0] * scale_factor)
                                 img = cv2.resize(img, (new_width, new_height))
+                                if corresponding_mask is not None:
+                                    corresponding_mask = cv2.resize(corresponding_mask, (new_width, new_height))
                             
                             # Place image in merged template
                             h = img.shape[0]
                             merged_template[y_offset:y_offset+h, 0:img.shape[1]] = img
+                            
+                            # Place corresponding mask in merged mask
+                            if corresponding_mask is not None:
+                                merged_mask[y_offset:y_offset+h, 0:corresponding_mask.shape[1]] = corresponding_mask
+                            else:
+                                # If no mask available, create white mask for this segment
+                                merged_mask[y_offset:y_offset+h, 0:img.shape[1]] = 255
+                            
                             y_offset += h
                         
-                        print(f"Merged {len(merge_candidates)} images into template of size {merged_template.shape[1]}x{merged_template.shape[0]}")
-                        template = merged_template
-                
-                # Resize template if needed
+                        print(f"Merged {len(merge_candidates)} images and masks into template of size {merged_template.shape[1]}x{merged_template.shape[0]}")
+                        template = merged_template                # Resize template if needed
                 if template.shape[1] > region.shape[1]:
                     scale_factor = region.shape[1] / template.shape[1] * 0.95
                     new_width = int(template.shape[1] * scale_factor)
@@ -654,14 +690,14 @@ class MangaProcessor:
                     top_left_x = max_loc[0]
                     top_left_y = max_loc[1] + y_start  # Add offset
                     print(f"Template matching found position at ({top_left_x}, {top_left_y}) with confidence {max_val:.3f}")
-                    return (top_left_x, top_left_y), max_val, merged_template, images_used
+                    return (top_left_x, top_left_y), max_val, merged_template, merged_mask, images_used
                 else:
                     print(f"Template matching confidence too low: {max_val:.3f}")
-                    return None, max_val, merged_template, images_used
+                    return None, max_val, merged_template, merged_mask, images_used
                         
             except Exception as e:
                 print(f"⚠️ Template matching error: {e}")
-                return None, 0.0, None, 0
+                return None, 0.0, None, None, 0
         
         def merge_images_vertically(dir):
             try:
@@ -755,9 +791,9 @@ class MangaProcessor:
                     
                     # Define search region based on current_y
                     if i == 0:
-                        search_region = (0, min(10000, raw_height))
+                        search_region = (0, min(20000, raw_height))
                     else:
-                        search_region = (max(0, current_y - 15000), min(raw_height, current_y + 20000))
+                        search_region = (max(0, current_y - 18000), min(raw_height, current_y + 15000))
                     
                     print(f"Searching for {files[i]} in region y={search_region[0]} to y={search_region[1]}")
                     
@@ -795,6 +831,7 @@ class MangaProcessor:
                             template, 
                             search_region,
                             small_images=images,
+                            small_masks=masks,
                             current_index=i
                         )
 
@@ -802,24 +839,45 @@ class MangaProcessor:
                             confidence = fallback_result[1]
                             position = fallback_result[0]
                             merged_template = fallback_result[2]
-                            skip_count = fallback_result[3] if len(fallback_result) > 3 else 0
+                            merged_mask_from_template = fallback_result[3]
+                            skip_count = fallback_result[4] if len(fallback_result) > 4 else 0
 
-                            if confidence >= 0.6:
+                            if confidence >= 0.4:
                                 method = "Template matching"
                                 print(f"✅ Template matching for {files[i]}: position {position}, confidence: {confidence:.3f}")
                                 if merged_template is not None:
                                     print(f"Using merged template for positioning")
                                     template = merged_template
-                                    merged_mask_array = np.ones((merged_template.shape[0], merged_template.shape[1]), dtype=np.uint8) * 255
-                                    mask_array = merged_mask_array
+                                    # Use merged mask instead of blank white mask
+                                    if merged_mask_from_template is not None:
+                                        mask_array = merged_mask_from_template
+                                        print(f"Using merged mask with {len([i for i in range(skip_count+1)])} masks combined")
+                                    else:
+                                        merged_mask_array = np.ones((merged_template.shape[0], merged_template.shape[1]), dtype=np.uint8) * 255
+                                        mask_array = merged_mask_array
+                                        print(f"No merged mask available, using blank white mask")
                                 top_left = position
                                 width, height = template.shape[1], template.shape[0]
                                 resized_template = template
                                 resized_mask = mask_array
 
-                            elif 0.2 <= confidence < 0.6:
+                            elif 0.3 <= confidence < 0.4:
                                 method = "Concat-below"
                                 print(f"⚠️ Confidence ({confidence:.3f}) low, concat below previous image.")
+                                
+                                # Check if we have merged template from failed template matching
+                                if merged_template is not None:
+                                    print(f"Using merged template for concat-below positioning")
+                                    template = merged_template
+                                    # Use merged mask instead of single mask
+                                    if merged_mask_from_template is not None:
+                                        mask_array = merged_mask_from_template
+                                        print(f"Using merged mask with {skip_count+1} masks combined for concat-below")
+                                    else:
+                                        merged_mask_array = np.ones((merged_template.shape[0], merged_template.shape[1]), dtype=np.uint8) * 255
+                                        mask_array = merged_mask_array
+                                        print(f"No merged mask available for concat-below, using blank white mask")
+                                
                                 x = 0
                                 y = current_y
                                 width, height = template.shape[1], template.shape[0]
@@ -919,7 +977,7 @@ class MangaProcessor:
         
         print("VN image vertical merging with SIFT completed!")
 
-    def create_intersection_masks(self, dir_to_process=None, kernel_size=50, dilation_size=10):
+    def create_intersection_masks(self, dir_to_process=None, kernel_size=30, dilation_size=20):
         """Step 5: Pipeline-based closure/union/exclusion mask logic with dilation"""
         print("\n=== Creating Intersection Masks (Pipeline Logic + Dilation) ===")
         
@@ -1092,7 +1150,7 @@ class MangaProcessor:
         # self.merge_raw_images(dir_to_process)
         # self.merge_raw_masks(dir_to_process)
         # self.resize_vn_images(dir_to_process)
-        # self.merge_vn_images_vertically(dir_to_process)
+        self.merge_vn_images_vertically(dir_to_process)
         self.create_intersection_masks(dir_to_process)
         self.generate_final_results(dir_to_process)
         
@@ -1102,12 +1160,12 @@ class MangaProcessor:
 
 # Main execution
 if __name__ == "__main__":
-    base_path = r"h:\manhwa\Rent-A-Girlfriend_1\test"
+    base_path = r"f:\manhwa\Nhiem_vu_doi_that"
     
     processor = MangaProcessor(base_path, threads=12)
     
-    # dir_to_process = "c1"
+    dir_to_process = "c1" 
     
-    # processor.run_pipeline(dir_to_process)
+    processor.run_pipeline(dir_to_process)
     
-    processor.run_pipeline()
+    # processor.run_pipeline()

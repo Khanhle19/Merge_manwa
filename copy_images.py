@@ -2,13 +2,41 @@ import os
 import shutil
 import sys
 from PIL import Image
+from multiprocessing import Pool, cpu_count
+
+# Try to import tqdm for progress bars, fallback if not available
+try:
+    from tqdm import tqdm
+    HAS_TQDM = True
+except ImportError:
+    HAS_TQDM = False
+    # Create a simple fallback class
+    class tqdm:
+        def __init__(self, total=None, desc="", unit=""):
+            self.total = total
+            self.desc = desc
+            self.count = 0
+            
+        def __enter__(self):
+            return self
+            
+        def __exit__(self, *args):
+            pass
+            
+        def update(self, n=1):
+            self.count += n
+            
+        @staticmethod
+        def write(text):
+            pass
 
 Image.MAX_IMAGE_PIXELS = None 
 # -----------------------------------------------------
-DIR_NAME = "test"
-SOURCE_BASE = "h:\manhwa\Rent-A-Girlfriend_1"
-TARGET_BASE = "h:\manhwa\Rent-A-Girlfriend_1\chap"
-CROP_PIXELS = 0  # Số pixel cần cắt bỏ ở cuối ảnh
+DIR_NAME = "Grand_Blue"
+SOURCE_BASE = r"e:\Manwa"
+TARGET_BASE = r"e:\Manwa_result"
+CROP_PIXELS = 0
+NUM_PROCESSES = min(8, cpu_count())
 # -----------------------------------------------------
 
 def create_directory_structure(source_dir, target_dir):
@@ -19,42 +47,56 @@ def create_directory_structure(source_dir, target_dir):
     # Create subdirectories
     for subdir in ['inpainted', 'result', 'mask']:
         os.makedirs(os.path.join(target_dir, subdir), exist_ok=True)
+
+def process_result_file(args):
+    """Worker function for processing a single result file."""
+    source_file, target_result_file, target_inpainted_file, crop_pixels = args
     
-    print(f"Created directory structure in {target_dir}")
+    try:
+        # Crop and copy to result folder
+        result_success = crop_remove_bottom_pixels(source_file, target_result_file, crop_pixels, verbose=False)
+        
+        # Crop and copy to inpainted folder
+        inpainted_success = crop_remove_bottom_pixels(source_file, target_inpainted_file, crop_pixels, verbose=False)
+        
+        return result_success and inpainted_success
+    except Exception as e:
+        tqdm.write(f"❌ Error processing {os.path.basename(source_file)}: {e}")
+        return False
 
 def copy_result_files(source_dir, target_dir, crop_pixels=CROP_PIXELS):
-    """Copy and crop files from source/result to target/result and target/inpainted."""
+    """Copy and crop files from source/result to target/result and target/inpainted using multiprocessing."""
     source_result = os.path.join(source_dir, 'result')
     target_result = os.path.join(target_dir, 'result')
     target_inpainted = os.path.join(target_dir, 'inpainted')
     
     # Check if source directory exists
     if not os.path.exists(source_result):
-        print(f"Warning: Source directory {source_result} does not exist.")
         return
     
-    cropped_count = 0
-    total_files = 0
-    
-    # Copy and crop files from source/result to target/result and target/inpainted
+    # Prepare arguments for multiprocessing
+    file_args = []
     for file in os.listdir(source_result):
         source_file = os.path.join(source_result, file)
         if os.path.isfile(source_file):
-            total_files += 1
-            
-            # Crop and copy to result folder
             target_result_file = os.path.join(target_result, file)
-            if crop_remove_bottom_pixels(source_file, target_result_file, crop_pixels):
-                cropped_count += 1
-            
-            # Crop and copy to inpainted folder
             target_inpainted_file = os.path.join(target_inpainted, file)
-            crop_remove_bottom_pixels(source_file, target_inpainted_file, crop_pixels)
+            file_args.append((source_file, target_result_file, target_inpainted_file, crop_pixels))
     
-    print(f"Processed {total_files} result files - cropped and copied to both result and inpainted folders")
-    print(f"Successfully removed bottom {crop_pixels}px from {cropped_count} result images")
+    if not file_args:
+        return
+    
+    # Process files with multiprocessing and progress bar
+    with Pool(NUM_PROCESSES) as pool:
+        with tqdm(total=len(file_args), desc="Processing result files", unit="file") as pbar:
+            results = []
+            for result in pool.imap(process_result_file, file_args):
+                results.append(result)
+                pbar.update(1)
+    
+    successful_count = sum(results)
 
-def crop_remove_bottom_pixels(image_path, output_path, crop_pixels=CROP_PIXELS):
+def crop_remove_bottom_pixels(image_path, output_path, crop_pixels=CROP_PIXELS, verbose=True):
     """Remove bottom pixels from an image (keep the top portion)."""
     try:
         with Image.open(image_path) as img:
@@ -62,7 +104,8 @@ def crop_remove_bottom_pixels(image_path, output_path, crop_pixels=CROP_PIXELS):
             
             # Check if image is tall enough
             if height <= crop_pixels:
-                print(f"Warning: Image {os.path.basename(image_path)} is only {height}px tall (≤ {crop_pixels}px), copying original")
+                if verbose:
+                    tqdm.write(f"⚠️  Image {os.path.basename(image_path)} is only {height}px tall (≤ {crop_pixels}px), copying original")
                 shutil.copy2(image_path, output_path)
                 return True
             
@@ -74,62 +117,98 @@ def crop_remove_bottom_pixels(image_path, output_path, crop_pixels=CROP_PIXELS):
             
             # Save the cropped image
             cropped_img.save(output_path)
-            print(f"Cropped {os.path.basename(image_path)}: {width}x{height} → {width}x{new_height} (removed {crop_pixels}px from bottom)")
             return True
             
     except Exception as e:
-        print(f"Error cropping image {os.path.basename(image_path)}: {e}")
+        if verbose:
+            tqdm.write(f"❌ Error cropping image {os.path.basename(image_path)}: {e}")
         return False
 
+def process_png_file(args):
+    """Worker function for processing a single PNG file."""
+    source_file, target_file, crop_pixels = args
+    
+    try:
+        if crop_remove_bottom_pixels(source_file, target_file, crop_pixels, verbose=False):
+            return os.path.basename(source_file)
+        return None
+    except Exception as e:
+        tqdm.write(f"❌ Error processing {os.path.basename(source_file)}: {e}")
+        return None
+
 def copy_png_files(source_dir, target_dir, crop_pixels=CROP_PIXELS):
-    """Copy PNG files from source/vn to target directory with bottom pixels removal."""
+    """Copy PNG files from source/vn to target directory with bottom pixels removal using multiprocessing."""
     source_vn = os.path.join(source_dir, 'vn')
     
     # Check if source directory exists
     if not os.path.exists(source_vn):
-        print(f"Warning: Source directory {source_vn} does not exist.")
         return []
     
-    # Copy and crop PNG files
-    copied_files = []
-    cropped_count = 0
-    
+    # Prepare arguments for multiprocessing
+    file_args = []
     for file in os.listdir(source_vn):
         if file.lower().endswith('.png'):
             source_file = os.path.join(source_vn, file)
             target_file = os.path.join(target_dir, file)
-            
-            # Remove bottom pixels and save
-            if crop_remove_bottom_pixels(source_file, target_file, crop_pixels):
-                copied_files.append(file)
-                cropped_count += 1
+            file_args.append((source_file, target_file, crop_pixels))
     
-    print(f"Processed {len(copied_files)} PNG files from {source_vn} to {target_dir}")
-    print(f"Successfully removed bottom {crop_pixels}px from {cropped_count} images")
+    if not file_args:
+        return []
+    
+    # Process files with multiprocessing and progress bar
+    with Pool(NUM_PROCESSES) as pool:
+        with tqdm(total=len(file_args), desc="Processing PNG files", unit="file") as pbar:
+            results = []
+            for result in pool.imap(process_png_file, file_args):
+                results.append(result)
+                pbar.update(1)
+    
+    # Filter successful results
+    copied_files = [filename for filename in results if filename is not None]
     return copied_files
 
+def create_single_mask(args):
+    """Worker function for creating a single mask file."""
+    source_file, mask_file = args
+    
+    try:
+        # Open the image to get dimensions
+        with Image.open(source_file) as img:
+            width, height = img.size
+            
+            # Create a white image with the same dimensions
+            white_img = Image.new('RGB', (width, height), color=(255, 255, 255))
+            
+            # Save the white image as mask
+            white_img.save(mask_file)
+            return True
+    except Exception as e:
+        tqdm.write(f"❌ Error creating mask for {os.path.basename(source_file)}: {e}")
+        return False
+
 def create_mask_files(target_dir, png_files):
-    """Create white mask files for each PNG in the target/mask directory."""
+    """Create white mask files for each PNG in the target/mask directory using multiprocessing."""
     mask_dir = os.path.join(target_dir, 'mask')
     
+    # Prepare arguments for multiprocessing
+    mask_args = []
     for file in png_files:
         source_file = os.path.join(target_dir, file)
         mask_file = os.path.join(mask_dir, file)
-        
-        try:
-            # Open the image to get dimensions
-            with Image.open(source_file) as img:
-                width, height = img.size
-                
-                # Create a white image with the same dimensions
-                white_img = Image.new('RGB', (width, height), color=(255, 255, 255))
-                
-                # Save the white image as mask
-                white_img.save(mask_file)
-        except Exception as e:
-            print(f"Error creating mask for {file}: {e}")
+        mask_args.append((source_file, mask_file))
     
-    print(f"Created {len(png_files)} mask files in {mask_dir}")
+    if not mask_args:
+        return
+    
+    # Create masks with multiprocessing and progress bar
+    with Pool(NUM_PROCESSES) as pool:
+        with tqdm(total=len(mask_args), desc="Creating mask files", unit="file") as pbar:
+            results = []
+            for result in pool.imap(create_single_mask, mask_args):
+                results.append(result)
+                pbar.update(1)
+    
+    successful_count = sum(results)
 
 def main():
     source_dir = os.path.join(SOURCE_BASE, DIR_NAME)
@@ -137,12 +216,7 @@ def main():
     
     # Check if source directory exists
     if not os.path.exists(source_dir):
-        print(f"Error: Source directory {source_dir} does not exist.")
         return 1
-    
-    print(f"Processing manga directory: {DIR_NAME}")
-    print(f"Source: {source_dir}")
-    print(f"Target: {target_dir}")
     
     # Create target directory structure
     create_directory_structure(source_dir, target_dir)
@@ -156,7 +230,6 @@ def main():
     # Create mask files
     create_mask_files(target_dir, copied_png_files)
     
-    print(f"Processing completed successfully for {DIR_NAME}!")
     return 0
 
 if __name__ == "__main__":
